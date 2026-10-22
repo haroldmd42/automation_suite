@@ -99,6 +99,7 @@ export default function UsersModule() {
     const pwd = formData.password || '';
     return {
       minLength: pwd.length >= 8,
+      maxLength: pwd.length <= 30 && pwd.length >= 1,
       hasUpper: /[A-Z]/.test(pwd),
       hasNumber: /[0-9]/.test(pwd),
       hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd),
@@ -111,38 +112,47 @@ export default function UsersModule() {
   const validateForm = () => {
     const errs = {};
 
-    // 1. Nombre completo
+    // 1. Nombre completo (mínimo 4 y máximo 45 caracteres)
     if (!formData.fullName.trim()) {
       errs.fullName = 'El nombre completo es obligatorio';
     } else if (formData.fullName.trim().length < 4) {
       errs.fullName = 'Mínimo 4 caracteres requeridos';
+    } else if (formData.fullName.trim().length > 45) {
+      errs.fullName = `El nombre no puede exceder 45 caracteres (actual: ${formData.fullName.trim().length})`;
     } else if (!NAME_RE.test(formData.fullName.trim())) {
       errs.fullName = 'Solo se permiten letras y espacios';
     }
 
-    // 2. Nombre de usuario (unicidad ignorando el usuario actual en edición)
+    // 2. Nombre de usuario (unicidad y límite estricto de 3 a 15 caracteres)
     if (!formData.username.trim()) {
       errs.username = 'El nombre de usuario es obligatorio';
+    } else if (formData.username.trim().length < 3) {
+      errs.username = 'El nombre de usuario debe tener al menos 3 caracteres';
+    } else if (formData.username.trim().length > 15) {
+      errs.username = `El nombre de usuario no puede exceder 15 caracteres (actual: ${formData.username.trim().length})`;
     } else if (!/^[a-z0-9_]{3,15}$/.test(formData.username.trim())) {
-      errs.username = 'Debe tener entre 3 y 15 caracteres (solo letras minúsculas, números o guion bajo)';
+      errs.username = 'Solo se permiten letras minúsculas, números o guion bajo';
     } else if (users.some((u) => u.id !== editingUser?.id && u.username.toLowerCase() === formData.username.trim().toLowerCase())) {
       errs.username = 'Este nombre de usuario ya está registrado en el sistema';
     }
 
-    // 3. Correo electrónico (unicidad ignorando el usuario actual en edición)
+    // 3. Correo electrónico (formato y límite máximo de 50 caracteres)
     if (!formData.email.trim()) {
       errs.email = 'El correo electrónico es obligatorio';
+    } else if (formData.email.trim().length > 50) {
+      errs.email = `El correo no puede exceder 50 caracteres (actual: ${formData.email.trim().length})`;
     } else if (!EMAIL_RE.test(formData.email.trim())) {
       errs.email = 'Formato de correo no válido (ej. usuario@dominio.com)';
     } else if (users.some((u) => u.id !== editingUser?.id && u.email.toLowerCase() === formData.email.trim().toLowerCase())) {
       errs.email = 'Este correo electrónico ya está en uso por otro usuario';
     }
 
-    // 4. Teléfono
+    // 4. Teléfono (exactamente 10 dígitos)
+    const phoneDigits = onlyDigits(formData.phone);
     if (!formData.phone.trim()) {
       errs.phone = 'El número de teléfono móvil es obligatorio';
-    } else if (onlyDigits(formData.phone).length !== 10) {
-      errs.phone = 'El teléfono debe contener exactamente 10 dígitos numéricos';
+    } else if (phoneDigits.length !== 10) {
+      errs.phone = `El teléfono debe contener exactamente 10 dígitos (actual: ${phoneDigits.length})`;
     }
 
     // 5. Rol
@@ -165,11 +175,13 @@ export default function UsersModule() {
       errs.permissions = 'Debes otorgar al menos un permiso o privilegio al usuario';
     }
 
-    // 9. Contraseña (en edición es opcional si desea conservar la existente)
+    // 9. Contraseña (en edición es opcional; máximo 30 caracteres)
     const isEditing = !!editingUser;
     if (!isEditing) {
       if (!formData.password) {
         errs.password = 'La contraseña temporal es obligatoria';
+      } else if (formData.password.length > 30) {
+        errs.password = 'La contraseña no puede exceder 30 caracteres';
       } else if (!isPasswordValid) {
         errs.password = 'La contraseña no cumple con todas las políticas de seguridad';
       }
@@ -180,7 +192,9 @@ export default function UsersModule() {
         errs.confirmPassword = 'Las contraseñas no coinciden';
       }
     } else if (formData.password) {
-      if (!isPasswordValid) {
+      if (formData.password.length > 30) {
+        errs.password = 'La nueva contraseña no puede exceder 30 caracteres';
+      } else if (!isPasswordValid) {
         errs.password = 'La nueva contraseña no cumple con las políticas de seguridad';
       }
 
@@ -465,7 +479,16 @@ export default function UsersModule() {
           data-testid="users-table-container"
         >
           <div className="w-full">
-            <table className="w-full text-left text-xs text-moss-800">
+            <table className="w-full table-fixed text-left text-xs text-moss-800">
+              <colgroup>
+                <col className="w-[26%]" />
+                <col className="w-[13%]" />
+                <col className="w-[16%]" />
+                <col className="w-[18%]" />
+                <col className="w-[10%]" />
+                <col className="w-[6%]" />
+                <col className="w-[11%]" />
+              </colgroup>
               <thead className="border-b border-moss-200 bg-moss-50/80 text-[11px] font-bold uppercase tracking-wider text-moss-700">
                 <tr>
                   <th scope="col" className="px-3.5 py-3 text-left">Usuario</th>
@@ -499,29 +522,29 @@ export default function UsersModule() {
                       className="cursor-pointer hover:bg-moss-50/70 transition-colors group"
                     >
                       {/* Usuario */}
-                      <td className="px-3.5 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-1 ring-moss-200">
+                      <td className="px-3.5 py-3 align-top">
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-1 ring-moss-200 mt-0.5">
                             {initials}
                           </div>
-                          <div className="min-w-0">
-                            <p
-                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm truncate flex items-center gap-1.5"
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm break-words leading-tight"
                               data-testid={`user-name-${user.id}`}
                             >
                               <span>{user.fullName}</span>
                               {user.updatedAt && (
                                 <span
                                   data-testid={`user-updated-badge-${user.id}`}
-                                  className="badge badge-moss text-[9px] py-0 px-1 font-mono font-normal"
+                                  className="badge badge-moss text-[9px] py-0 px-1 font-mono font-normal ml-1.5 align-middle inline-flex"
                                   title={`Modificado: ${user.updatedAt}`}
                                 >
                                   editado
                                 </span>
                               )}
-                            </p>
+                            </div>
                             <p
-                              className="font-mono text-[11px] text-moss-500 truncate"
+                              className="font-mono text-[11px] text-moss-500 break-words mt-0.5"
                               data-testid={`user-username-${user.id}`}
                             >
                               @{user.username} · <span className="font-semibold text-moss-600">{user.id}</span>
@@ -531,30 +554,30 @@ export default function UsersModule() {
                       </td>
 
                       {/* Rol */}
-                      <td className="px-2.5 py-3">
+                      <td className="px-2.5 py-3 align-top">
                         <span
-                          className={cn('badge text-[11px] font-semibold whitespace-nowrap', roleObj.color)}
+                          className={cn('badge text-[11px] font-semibold inline-flex items-center gap-1 max-w-full', roleObj.color)}
                           data-testid={`user-role-${user.id}`}
                           title={roleObj.label}
                         >
                           <Shield className="h-3 w-3 shrink-0" />
-                          <span>{roleObj.badge || roleObj.label}</span>
+                          <span className="truncate">{roleObj.badge || roleObj.label}</span>
                         </span>
                       </td>
 
                       {/* Departamento */}
-                      <td className="px-2.5 py-3 text-xs font-medium text-moss-800 leading-snug">
-                        <span className="line-clamp-2" title={deptObj?.label || user.department}>
+                      <td className="px-2.5 py-3 align-top text-xs font-medium text-moss-800 leading-snug">
+                        <span className="break-words line-clamp-2" title={deptObj?.label || user.department}>
                           {deptObj?.label || user.department}
                         </span>
                       </td>
 
                       {/* Contacto */}
-                      <td className="px-2.5 py-3">
-                        <div className="space-y-0.5">
-                          <p className="flex items-center gap-1.5 font-medium text-moss-900 text-xs truncate max-w-[170px]" title={user.email}>
+                      <td className="px-2.5 py-3 align-top">
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="flex items-center gap-1.5 font-medium text-moss-900 text-xs min-w-0" title={user.email}>
                             <Mail className="h-3 w-3 text-moss-500 shrink-0" />
-                            <span data-testid={`user-email-${user.id}`} className="truncate">{user.email}</span>
+                            <span data-testid={`user-email-${user.id}`} className="break-all leading-tight">{user.email}</span>
                           </p>
                           <p className="flex items-center gap-1.5 font-mono text-[11px] text-moss-500">
                             <Phone className="h-3 w-3 text-moss-400 shrink-0" />
@@ -564,12 +587,12 @@ export default function UsersModule() {
                       </td>
 
                       {/* Fecha Ingreso */}
-                      <td className="px-2 py-3 font-mono text-xs text-moss-700 whitespace-nowrap" data-testid={`user-hire-date-${user.id}`}>
+                      <td className="px-2 py-3 align-top font-mono text-xs text-moss-700 whitespace-nowrap" data-testid={`user-hire-date-${user.id}`}>
                         {user.hireDate}
                       </td>
 
                       {/* Estado */}
-                      <td className="px-2 py-3">
+                      <td className="px-2 py-3 align-top">
                         <span
                           data-testid={`user-status-${user.id}`}
                           className={cn(
@@ -586,7 +609,7 @@ export default function UsersModule() {
                       </td>
 
                       {/* Acciones */}
-                      <td className="px-3.5 py-3 text-right whitespace-nowrap">
+                      <td className="px-3.5 py-3 align-top text-right whitespace-nowrap">
                         <div
                           className="flex items-center justify-end gap-1.5"
                           onClick={(e) => e.stopPropagation()}
@@ -615,7 +638,7 @@ export default function UsersModule() {
                             type="button"
                             onClick={() => setDeleteConfirmUser(user)}
                             data-testid={`user-delete-btn-${user.id}`}
-                            className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg"
+                            className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg shrink-0"
                             title="Eliminar usuario"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -698,7 +721,23 @@ export default function UsersModule() {
                 htmlFor="user-fullname"
                 testId="user-fullname-input"
                 error={touched.fullName && errors.fullName}
+                hint="Mínimo 4 y máximo 45 caracteres"
                 required
+                labelExtra={
+                  <span
+                    data-testid="user-fullname-counter"
+                    className={cn(
+                      'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded transition-colors',
+                      formData.fullName.trim().length > 45
+                        ? 'bg-danger-100 text-danger-700 font-bold'
+                        : formData.fullName.trim().length >= 40
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-moss-100/70 text-moss-600',
+                    )}
+                  >
+                    {formData.fullName.length}/45
+                  </span>
+                }
               >
                 <input
                   id="user-fullname"
@@ -717,8 +756,21 @@ export default function UsersModule() {
                 htmlFor="user-username"
                 testId="user-username-input"
                 error={touched.username && errors.username}
-                hint="Minúsculas y números (3-15 caracteres)"
+                hint="Minúsculas, números o guion bajo (3 a 15 caracteres)"
                 required
+                labelExtra={
+                  <span
+                    data-testid="user-username-counter"
+                    className={cn(
+                      'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded transition-colors',
+                      formData.username.trim().length > 15
+                        ? 'bg-danger-100 text-danger-700 font-bold'
+                        : 'bg-moss-100/70 text-moss-600',
+                    )}
+                  >
+                    {formData.username.length}/15
+                  </span>
+                }
               >
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-moss-400">
@@ -742,7 +794,21 @@ export default function UsersModule() {
                 htmlFor="user-email"
                 testId="user-email-input"
                 error={touched.email && errors.email}
+                hint="Máximo 50 caracteres (ej. usuario@corporativo.com)"
                 required
+                labelExtra={
+                  <span
+                    data-testid="user-email-counter"
+                    className={cn(
+                      'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded transition-colors',
+                      formData.email.trim().length > 50
+                        ? 'bg-danger-100 text-danger-700 font-bold'
+                        : 'bg-moss-100/70 text-moss-600',
+                    )}
+                  >
+                    {formData.email.length}/50
+                  </span>
+                }
               >
                 <input
                   id="user-email"
@@ -762,8 +828,23 @@ export default function UsersModule() {
                 htmlFor="user-phone"
                 testId="user-phone-input"
                 error={touched.phone && errors.phone}
-                hint="10 dígitos numéricos"
+                hint="Exactamente 10 dígitos numéricos"
                 required
+                labelExtra={
+                  <span
+                    data-testid="user-phone-counter"
+                    className={cn(
+                      'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded transition-colors',
+                      onlyDigits(formData.phone).length > 10
+                        ? 'bg-danger-100 text-danger-700 font-bold'
+                        : onlyDigits(formData.phone).length === 10
+                        ? 'bg-green-100 text-green-700 font-bold'
+                        : 'bg-moss-100/70 text-moss-600',
+                    )}
+                  >
+                    {onlyDigits(formData.phone).length}/10
+                  </span>
+                }
               >
                 <input
                   id="user-phone"
@@ -954,8 +1035,23 @@ export default function UsersModule() {
                 htmlFor="user-password"
                 testId="user-password-input"
                 error={touched.password && errors.password}
-                hint={editingUser ? 'Dejar en blanco para conservar la actual' : undefined}
+                hint={editingUser ? 'Dejar en blanco para conservar la actual' : 'De 8 a 30 caracteres con mayúscula, número y símbolo'}
                 required={!editingUser}
+                labelExtra={
+                  formData.password ? (
+                    <span
+                      data-testid="user-password-counter"
+                      className={cn(
+                        'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded transition-colors',
+                        formData.password.length > 30
+                          ? 'bg-danger-100 text-danger-700 font-bold'
+                          : 'bg-moss-100/70 text-moss-600',
+                      )}
+                    >
+                      {formData.password.length}/30
+                    </span>
+                  ) : null
+                }
               >
                 <input
                   id="user-password"
@@ -994,7 +1090,7 @@ export default function UsersModule() {
             {(!editingUser || !!formData.password) && (
               <div className="mt-4 rounded-xl border border-moss-200 bg-moss-50/60 p-3.5 space-y-2">
                 <p className="text-xs font-bold text-moss-800">Políticas de seguridad de contraseña:</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                   <span
                     className={cn(
                       'flex items-center gap-1.5 font-medium transition-colors',
@@ -1004,6 +1100,22 @@ export default function UsersModule() {
                   >
                     {passwordRules.minLength ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
                     Mínimo 8 caracteres
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 font-medium transition-colors',
+                      formData.password.length > 30 ? 'text-danger-600 font-bold' : passwordRules.maxLength ? 'text-moss-700 font-bold' : 'text-moss-400',
+                    )}
+                    data-testid="pwd-rule-maxlength"
+                  >
+                    {formData.password.length > 30 ? (
+                      <X className="h-3.5 w-3.5 text-danger-600" />
+                    ) : passwordRules.maxLength ? (
+                      <Check className="h-3.5 w-3.5 text-moss-600" />
+                    ) : (
+                      <Check className="h-3.5 w-3.5 text-moss-400" />
+                    )}
+                    Máximo 30 caracteres
                   </span>
                   <span
                     className={cn(
@@ -1092,15 +1204,15 @@ export default function UsersModule() {
                     .map((w) => w[0]?.toUpperCase())
                     .join('')}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3
-                    className="text-lg font-bold text-moss-900"
+                    className="text-lg font-bold text-moss-900 break-words leading-tight"
                     data-testid="detail-user-fullname"
                   >
                     {selectedUser.fullName}
                   </h3>
                   <p
-                    className="font-mono text-xs font-semibold text-moss-600"
+                    className="font-mono text-xs font-semibold text-moss-600 break-words mt-0.5"
                     data-testid="detail-user-username"
                   >
                     @{selectedUser.username}
@@ -1161,11 +1273,10 @@ export default function UsersModule() {
                   Correo Electrónico
                 </span>
                 <p
-                  className="mt-1 font-semibold text-sm text-moss-900 flex items-center gap-2"
-                  data-testid="detail-user-email"
+                  className="mt-1 font-semibold text-sm text-moss-900 flex items-start gap-2 min-w-0"
                 >
-                  <Mail className="h-4 w-4 text-moss-600 shrink-0" />
-                  {selectedUser.email}
+                  <Mail className="h-4 w-4 text-moss-600 shrink-0 mt-0.5" />
+                  <span data-testid="detail-user-email" className="break-all">{selectedUser.email}</span>
                 </p>
               </div>
 
