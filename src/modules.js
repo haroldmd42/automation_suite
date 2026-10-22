@@ -1,4 +1,4 @@
-import { LayoutDashboard, Lock, ShoppingCart, SlidersHorizontal, Timer, Table2 } from 'lucide-react';
+import { LayoutDashboard, Lock, ShoppingCart, SlidersHorizontal, Timer, Table2, Users } from 'lucide-react';
 
 /** Metadatos de módulos: usados por el sidebar, el dashboard y el breadcrumb. */
 export const MODULES = [
@@ -8,6 +8,24 @@ export const MODULES = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     testId: 'nav-dashboard',
+  },
+  {
+    key: 'users',
+    path: '/users',
+    label: 'Gestión de Usuarios',
+    icon: Users,
+    testId: 'nav-users',
+    difficulty: 'Intermedio',
+    description:
+      'Directorio con listado inicial vacío, modal de creación con validaciones estrictas de roles, departamentos y credenciales, y vista de detalle profundo para verificación QA.',
+    challenges: [
+      'Verificación de estado inicial vacío con call-to-action',
+      'Validación en vivo de contraseñas y checklist de seguridad',
+      'Reglas de unicidad para nombre de usuario y correo corporativo',
+      'Asignación de roles y permisos con CustomSelect y CustomDatePicker',
+      'Comprobación de correspondencia entre datos de creación y ficha de detalle',
+    ],
+    scenarios: 20,
   },
   {
     key: 'auth',

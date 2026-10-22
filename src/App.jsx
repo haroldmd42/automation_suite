@@ -18,6 +18,7 @@ const OrderConfirmation = lazy(() => import('./modules/ecommerce/OrderConfirmati
 const ControlsModule = lazy(() => import('./modules/controls/ControlsModule'));
 const AsyncModule = lazy(() => import('./modules/async/AsyncModule'));
 const DataTableModule = lazy(() => import('./modules/tables/DataTableModule'));
+const UsersModule = lazy(() => import('./modules/users/UsersModule'));
 
 function RouteFallback() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="users" element={<UsersModule />} />
                 <Route path="auth" element={<AuthModule />} />
                 <Route path="ecommerce" element={<EcommerceLayout />}>
                   <Route index element={<Catalog />} />
