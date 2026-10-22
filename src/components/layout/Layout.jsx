@@ -255,10 +255,10 @@ export default function Layout() {
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="lg:pl-72">
         <Topbar onMenu={() => setMenuOpen(true)} />
-        <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8" data-testid="main-content">
+        <main id="main-content" className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-4 py-6 sm:px-6 lg:py-8 transition-all duration-300" data-testid="main-content">
           <Outlet />
         </main>
-        <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 pb-8 text-xs text-moss-600 sm:px-6">
+        <footer className="mx-auto flex max-w-7xl 2xl:max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pb-8 text-xs text-moss-600 sm:px-6">
           <span>Automation Suite · Entorno de práctica QA · Datos 100% simulados</span>
           <span className="flex items-center gap-2">
             <button

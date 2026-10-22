@@ -14,6 +14,8 @@ import {
   Calendar,
   Lock,
   Eye,
+  EyeOff,
+  BookOpen,
   Trash2,
   ExternalLink,
   Building,
@@ -34,6 +36,7 @@ import CustomDatePicker from '../../components/ui/CustomDatePicker';
 import Modal from '../../components/ui/Modal';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { useToast } from '../../context/ToastContext';
+import ValidationRulesPanel from './ValidationRulesPanel';
 
 export const USER_ROLES = [
   { value: 'admin', label: 'Administrador del Sistema', badge: 'Admin', color: 'badge-red', desc: 'Acceso total y configuración de seguridad' },
@@ -89,6 +92,21 @@ export default function UsersModule() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showModalRulesGuide, setShowModalRulesGuide] = useState(false);
+
+  // Panel lateral de especificaciones y reglas de validación QA
+  const [showRulesPanel, setShowRulesPanel] = useState(() => {
+    const saved = localStorage.getItem('qa_users_rules_panel_visible');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleRulesPanel = () => {
+    setShowRulesPanel((prev) => {
+      const next = !prev;
+      localStorage.setItem('qa_users_rules_panel_visible', String(next));
+      return next;
+    });
+  };
 
   // Formulario de creación / edición
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -355,6 +373,24 @@ export default function UsersModule() {
         badge="QA Lab · Módulo de Usuarios"
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleRulesPanel}
+              data-testid="toggle-rules-panel-btn"
+              className={cn(
+                'btn btn-sm shadow-sm transition-all',
+                showRulesPanel
+                  ? 'bg-moss-700 text-white hover:bg-moss-800 ring-2 ring-moss-400/40'
+                  : 'btn-secondary text-moss-800 border-moss-300 hover:bg-moss-100',
+              )}
+              title={showRulesPanel ? 'Ocultar panel lateral de reglas QA' : 'Mostrar panel lateral con todas las reglas de validación'}
+            >
+              {showRulesPanel ? <EyeOff className="h-4 w-4" /> : <BookOpen className="h-4 w-4 text-moss-600" />}
+              <span>{showRulesPanel ? 'Ocultar Reglas QA' : 'Ver Reglas de Validación'}</span>
+              <span className="badge badge-moss !text-[10px] !py-0 !px-1.5 ml-1">QA Lab</span>
+            </button>
+            <LocatorHint testId="toggle-rules-panel-btn" label="Alternar Reglas de Validación" />
+
             {users.length > 0 && (
               <button
                 type="button"
@@ -378,6 +414,11 @@ export default function UsersModule() {
           </div>
         }
       />
+
+      {/* CONTENEDOR PRINCIPAL: DIRECTORIO + PANEL LATERAL DE REGLAS QA */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* COLUMNA PRINCIPAL */}
+        <div className="flex-1 min-w-0 w-full space-y-6">
 
       {/* BARRA DE HERRAMIENTAS Y FILTROS */}
       <section className="card p-5">
@@ -412,7 +453,19 @@ export default function UsersModule() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-semibold text-moss-700">
+          <div className="flex items-center gap-2.5 text-xs font-semibold text-moss-700">
+            {!showRulesPanel && (
+              <button
+                type="button"
+                onClick={() => setShowRulesPanel(true)}
+                data-testid="toolbar-show-rules-btn"
+                className="btn btn-secondary btn-sm !text-xs !py-1 gap-1.5"
+                title="Mostrar especificación de reglas de validación QA"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-moss-600" />
+                <span>Ver Reglas QA</span>
+              </button>
+            )}
             <span
               data-testid="users-count-badge"
               className="rounded-xl bg-moss-100 px-3 py-1.5 border border-moss-200 text-moss-800"
@@ -653,6 +706,18 @@ export default function UsersModule() {
           </div>
         </section>
       )}
+        </div>
+
+        {/* COLUMNA DERECHA: PANEL DE REGLAS DE VALIDACIÓN QA (CORRESPONDE AL RECUADRO ROJO) */}
+        {showRulesPanel && (
+          <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-24">
+            <ValidationRulesPanel
+              onClose={() => setShowRulesPanel(false)}
+              onOpenCreateModal={handleOpenCreateModal}
+            />
+          </div>
+        )}
+      </div>
 
       {/* MODAL 1: FORMULARIO DE CREACIÓN / EDICIÓN DE USUARIO */}
       <Modal
@@ -707,6 +772,52 @@ export default function UsersModule() {
           data-testid={editingUser ? 'edit-user-form' : 'create-user-form'}
           className="space-y-6"
         >
+          {/* BANNER EXPANDIBLE DE REGLAS Y LÍMITES EN EL FORMULARIO */}
+          <div
+            data-testid="modal-rules-guide-banner"
+            className="rounded-xl border border-moss-200 bg-moss-50/70 p-3 text-xs"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 font-bold text-moss-800">
+                <BookOpen className="h-4 w-4 text-moss-600 shrink-0" />
+                <span>Guía Rápida de Validación y Límites (QA):</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowModalRulesGuide((v) => !v)}
+                data-testid="toggle-modal-rules-guide-btn"
+                className="text-xs font-semibold text-moss-700 hover:text-moss-900 underline underline-offset-2 shrink-0 inline-flex items-center gap-1"
+              >
+                {showModalRulesGuide ? 'Ocultar reglas' : 'Ver reglas y límites'}
+              </button>
+            </div>
+            {showModalRulesGuide && (
+              <div
+                data-testid="modal-rules-guide-details"
+                className="mt-2.5 pt-2.5 border-t border-moss-200 grid gap-2 sm:grid-cols-2 text-[11px] text-moss-700 font-medium"
+              >
+                <div>
+                  <strong className="text-moss-900">1. Nombre Completo:</strong> 4 a 45 caracteres (solo letras y espacios).
+                </div>
+                <div>
+                  <strong className="text-moss-900">2. Username:</strong> 3 a 15 caracteres (minúsculas, números, _, único).
+                </div>
+                <div>
+                  <strong className="text-moss-900">3. Correo Corporativo:</strong> Máximo 50 caracteres (formato válido, único).
+                </div>
+                <div>
+                  <strong className="text-moss-900">4. Teléfono:</strong> Exactamente 10 dígitos numéricos.
+                </div>
+                <div>
+                  <strong className="text-moss-900">5. Contraseña:</strong> 8 a 30 caracteres (1 mayúscula, 1 número, 1 símbolo).
+                </div>
+                <div>
+                  <strong className="text-moss-900">6. Organización:</strong> Rol, Departamento, Fecha y al menos 1 Permiso.
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* SECCIÓN 1: DATOS PERSONALES */}
           <div className="form-section">
             <div className="form-section-header">
