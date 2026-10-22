@@ -403,23 +403,24 @@ export default function UsersModule() {
           className="card overflow-hidden"
           data-testid="users-table-container"
         >
-          <div className="overflow-x-auto">
+          <div className="w-full">
             <table className="w-full text-left text-xs text-moss-800">
-              <thead className="border-b border-moss-200 bg-moss-50/75 text-[11px] font-bold uppercase tracking-wider text-moss-700">
+              <thead className="border-b border-moss-200 bg-moss-50/80 text-[11px] font-bold uppercase tracking-wider text-moss-700">
                 <tr>
-                  <th scope="col" className="table-th">Usuario</th>
-                  <th scope="col" className="table-th">Rol Asignado</th>
-                  <th scope="col" className="table-th">Departamento</th>
-                  <th scope="col" className="table-th">Contacto</th>
-                  <th scope="col" className="table-th">Fecha Ingreso</th>
-                  <th scope="col" className="table-th">Estado</th>
-                  <th scope="col" className="table-th text-right">Acciones</th>
+                  <th scope="col" className="px-3.5 py-3 text-left">Usuario</th>
+                  <th scope="col" className="px-2.5 py-3 text-left">Rol Asignado</th>
+                  <th scope="col" className="px-2.5 py-3 text-left">Departamento</th>
+                  <th scope="col" className="px-2.5 py-3 text-left">Contacto</th>
+                  <th scope="col" className="px-2 py-3 text-left">Fecha Ingreso</th>
+                  <th scope="col" className="px-2 py-3 text-left">Estado</th>
+                  <th scope="col" className="px-3.5 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-moss-100">
                 {filteredUsers.map((user) => {
                   const roleObj = USER_ROLES.find((r) => r.value === user.role) || {
                     label: user.role,
+                    badge: user.role,
                     color: 'badge-moss',
                   };
                   const deptObj = DEPARTMENTS.find((d) => d.value === user.department);
@@ -434,52 +435,56 @@ export default function UsersModule() {
                       key={user.id}
                       data-testid={`user-row-${user.id}`}
                       onClick={() => setSelectedUser(user)}
-                      className="cursor-pointer hover:bg-moss-50/80 transition-colors group"
+                      className="cursor-pointer hover:bg-moss-50/70 transition-colors group"
                     >
                       {/* Usuario */}
-                      <td className="table-td">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-2 ring-moss-200">
+                      <td className="px-3.5 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-1 ring-moss-200">
                             {initials}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p
-                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-sm"
+                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm truncate"
                               data-testid={`user-name-${user.id}`}
                             >
                               {user.fullName}
                             </p>
                             <p
-                              className="font-mono text-xs text-moss-500"
+                              className="font-mono text-[11px] text-moss-500 truncate"
                               data-testid={`user-username-${user.id}`}
                             >
-                              @{user.username} · <span className="text-[11px] font-semibold text-moss-600">{user.id}</span>
+                              @{user.username} · <span className="font-semibold text-moss-600">{user.id}</span>
                             </p>
                           </div>
                         </div>
                       </td>
 
                       {/* Rol */}
-                      <td className="table-td">
+                      <td className="px-2.5 py-3">
                         <span
-                          className={cn('badge text-xs font-semibold', roleObj.color)}
+                          className={cn('badge text-[11px] font-semibold whitespace-nowrap', roleObj.color)}
                           data-testid={`user-role-${user.id}`}
+                          title={roleObj.label}
                         >
-                          <Shield className="h-3 w-3" /> {roleObj.label}
+                          <Shield className="h-3 w-3 shrink-0" />
+                          <span>{roleObj.badge || roleObj.label}</span>
                         </span>
                       </td>
 
                       {/* Departamento */}
-                      <td className="table-td font-medium text-moss-800">
-                        {deptObj?.label || user.department}
+                      <td className="px-2.5 py-3 text-xs font-medium text-moss-800 leading-snug">
+                        <span className="line-clamp-2" title={deptObj?.label || user.department}>
+                          {deptObj?.label || user.department}
+                        </span>
                       </td>
 
                       {/* Contacto */}
-                      <td className="table-td">
+                      <td className="px-2.5 py-3">
                         <div className="space-y-0.5">
-                          <p className="flex items-center gap-1.5 font-medium text-moss-900">
+                          <p className="flex items-center gap-1.5 font-medium text-moss-900 text-xs truncate max-w-[170px]" title={user.email}>
                             <Mail className="h-3 w-3 text-moss-500 shrink-0" />
-                            <span data-testid={`user-email-${user.id}`}>{user.email}</span>
+                            <span data-testid={`user-email-${user.id}`} className="truncate">{user.email}</span>
                           </p>
                           <p className="flex items-center gap-1.5 font-mono text-[11px] text-moss-500">
                             <Phone className="h-3 w-3 text-moss-400 shrink-0" />
@@ -489,16 +494,16 @@ export default function UsersModule() {
                       </td>
 
                       {/* Fecha Ingreso */}
-                      <td className="table-td font-mono" data-testid={`user-hire-date-${user.id}`}>
+                      <td className="px-2 py-3 font-mono text-xs text-moss-700 whitespace-nowrap" data-testid={`user-hire-date-${user.id}`}>
                         {user.hireDate}
                       </td>
 
                       {/* Estado */}
-                      <td className="table-td">
+                      <td className="px-2 py-3">
                         <span
                           data-testid={`user-status-${user.id}`}
                           className={cn(
-                            'badge text-[11px]',
+                            'badge text-[11px] whitespace-nowrap',
                             user.status === 'active' && 'badge-green',
                             user.status === 'pending' && 'badge-yellow',
                             user.status === 'suspended' && 'badge-red',
@@ -511,28 +516,29 @@ export default function UsersModule() {
                       </td>
 
                       {/* Acciones */}
-                      <td className="table-td text-right">
+                      <td className="px-3.5 py-3 text-right whitespace-nowrap">
                         <div
-                          className="flex items-center justify-end gap-2"
+                          className="flex items-center justify-end gap-1.5"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             type="button"
                             onClick={() => setSelectedUser(user)}
                             data-testid={`user-view-btn-${user.id}`}
-                            className="btn btn-secondary btn-sm"
+                            className="btn btn-secondary !px-2.5 !py-1 text-xs"
                             title="Ver detalles completos del usuario"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" /> Ver Detalle
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            <span>Detalle</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmUser(user)}
                             data-testid={`user-delete-btn-${user.id}`}
-                            className="btn btn-ghost btn-sm btn-icon text-moss-400 hover:text-danger-600"
+                            className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg"
                             title="Eliminar usuario"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </td>
