@@ -21,6 +21,7 @@ import { FAILURE_RATES, NETWORK_MODES, setNetworkConfig } from '../../services/n
 import { cn } from '../../utils/format';
 import LocatorInspector from '../qa/LocatorInspector';
 import LocatorHint from '../qa/LocatorHint';
+import CustomSelect from '../ui/CustomSelect';
 
 function Brand() {
   return (
@@ -153,48 +154,40 @@ function Topbar({ onMenu }) {
 
         <div className="ml-auto flex items-center gap-2">
           <div
-            className="hidden items-center gap-1 rounded-xl border border-moss-200 bg-white/80 p-1 shadow-sm sm:flex"
+            className="hidden items-center gap-1.5 rounded-xl border border-moss-200 bg-white/90 p-1 shadow-sm sm:flex"
             title="Simulación de red"
           >
-            <span className="pl-2 text-moss-600">
+            <span className="pl-1.5 text-moss-600">
               {network.mode === 'instant' ? <Zap className="h-4 w-4" /> : network.failureRate > 0 ? <WifiOff className="h-4 w-4 text-warning-600" /> : <Wifi className="h-4 w-4" />}
             </span>
-            <label htmlFor="network-mode-select" className="sr-only">
-              Velocidad de red
-            </label>
-            <select
-              id="network-mode-select"
-              data-testid="network-mode-select"
-              value={network.mode}
-              onChange={(e) => setNetworkConfig({ mode: e.target.value })}
-              className="cursor-pointer rounded-lg border-0 bg-transparent py-1 pl-1 pr-6 text-xs font-medium text-moss-800 focus:ring-2 focus:ring-moss-500"
-            >
-              {Object.entries(NETWORK_MODES).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
-            <span className="h-5 w-px bg-moss-200" />
-            <label htmlFor="network-failure-select" className="sr-only">
-              Tasa de fallos
-            </label>
-            <select
-              id="network-failure-select"
-              data-testid="network-failure-select"
-              value={network.failureRate}
-              onChange={(e) => setNetworkConfig({ failureRate: Number(e.target.value) })}
-              className={cn(
-                'cursor-pointer rounded-lg border-0 bg-transparent py-1 pl-1 pr-6 text-xs font-medium focus:ring-2 focus:ring-moss-500',
-                network.failureRate > 0 ? 'text-warning-700' : 'text-moss-800',
-              )}
-            >
-              {FAILURE_RATES.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+            <div className="w-32">
+              <CustomSelect
+                id="network-mode-select"
+                testId="network-mode-select"
+                size="sm"
+                ariaLabel="Velocidad de red"
+                value={network.mode}
+                onChange={(e) => setNetworkConfig({ mode: e.target.value })}
+                options={Object.entries(NETWORK_MODES).map(([k, v]) => ({
+                  value: k,
+                  label: v.label,
+                }))}
+              />
+            </div>
+            <div className="w-28">
+              <CustomSelect
+                id="network-failure-select"
+                testId="network-failure-select"
+                size="sm"
+                ariaLabel="Tasa de fallos de red"
+                value={String(network.failureRate)}
+                onChange={(e) => setNetworkConfig({ failureRate: Number(e.target.value) })}
+                options={FAILURE_RATES.map((f) => ({
+                  value: String(f.value),
+                  label: f.label,
+                }))}
+              />
+            </div>
           </div>
 
           <button

@@ -21,6 +21,7 @@ import {
 } from '../../utils/format';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { Alert } from '../../components/ui/Primitives';
+import CustomDatePicker from '../../components/ui/CustomDatePicker';
 
 const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -307,34 +308,32 @@ export default function AdvancedDatePicker() {
         </div>
 
         {/* Entradas de Rango */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="range-start-input" className="label">
-              <span>Fecha de Inicio</span>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="range-start-input" className="label flex items-center justify-between">
+              <span className="font-medium text-moss-800">Fecha de Inicio</span>
               <LocatorHint testId="range-start-input" />
             </label>
-            <input
+            <CustomDatePicker
               id="range-start-input"
-              type="date"
               value={rangeStart}
               onChange={(e) => setRangeStart(e.target.value)}
-              data-testid="range-start-input"
-              className="input font-mono"
+              testId="range-start-input"
+              placeholder="dd/mm/aaaa"
             />
           </div>
 
-          <div>
-            <label htmlFor="range-end-input" className="label">
-              <span>Fecha de Finalización</span>
+          <div className="space-y-2">
+            <label htmlFor="range-end-input" className="label flex items-center justify-between">
+              <span className="font-medium text-moss-800">Fecha de Finalización</span>
               <LocatorHint testId="range-end-input" />
             </label>
-            <input
+            <CustomDatePicker
               id="range-end-input"
-              type="date"
               value={rangeEnd}
               onChange={(e) => setRangeEnd(e.target.value)}
-              data-testid="range-end-input"
-              className="input font-mono"
+              testId="range-end-input"
+              placeholder="dd/mm/aaaa"
             />
           </div>
         </div>

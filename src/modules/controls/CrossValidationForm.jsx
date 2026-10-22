@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   FileText,
   Upload,
@@ -12,6 +12,9 @@ import {
   Sparkles,
   Paperclip,
   X,
+  Briefcase,
+  DollarSign,
+  FileCheck2,
 } from 'lucide-react';
 import {
   EMAIL_RE,
@@ -19,8 +22,10 @@ import {
   onlyDigits,
   ageFrom,
 } from '../../utils/validators';
-import { formatMoney, fromISODate, cn } from '../../utils/format';
+import { fromISODate, cn } from '../../utils/format';
 import { Field, Checkbox } from '../../components/ui/Field';
+import CustomSelect from '../../components/ui/CustomSelect';
+import CustomDatePicker from '../../components/ui/CustomDatePicker';
 import LocatorHint from '../../components/qa/LocatorHint';
 import Modal from '../../components/ui/Modal';
 import { Alert, Spinner } from '../../components/ui/Primitives';
@@ -239,14 +244,15 @@ export default function CrossValidationForm() {
   };
 
   return (
-    <div data-testid="cross-validation-root" className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div data-testid="cross-validation-root" className="space-y-8">
+      {/* Cabecera explicativa */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-moss-900">
+          <h3 className="text-xl font-bold text-moss-900">
             Formulario con 12+ Reglas de Validación Cruzada
           </h3>
-          <p className="text-sm text-moss-600">
-            Casos límite: campos condicionales por edad, subordinación de contratación, rangos
+          <p className="mt-1 text-sm text-moss-600 max-w-2xl">
+            Casos límite: campos condicionales por edad, subordinación laboral, rangos
             numéricos interdependientes y candado de lectura obligatoria de términos.
           </p>
         </div>
@@ -264,14 +270,16 @@ export default function CrossValidationForm() {
         onSubmit={handleSubmit}
         noValidate
         data-testid="cross-validation-form"
-        className="card p-6 space-y-6"
+        className="space-y-6"
       >
         {/* SECCIÓN 1: IDENTIDAD Y EDAD */}
-        <div>
-          <h4 className="text-sm font-bold text-moss-900 border-b border-moss-200/80 pb-2 mb-4 flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-moss-600" /> 1. Datos Personales y Validación de Edad
-          </h4>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="form-section">
+          <div className="form-section-header">
+            <UserCheck className="h-4 w-4 text-moss-600" />
+            <span>1. Datos Personales y Validación de Edad</span>
+          </div>
+
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <Field
               label="Nombre Completo"
               htmlFor="cross-fullname"
@@ -329,14 +337,16 @@ export default function CrossValidationForm() {
               }
               required
             >
-              <input
+              <CustomDatePicker
                 id="cross-birthdate"
-                type="date"
                 value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                onBlur={() => setTouched((t) => ({ ...t, birthDate: true }))}
-                data-testid="cross-birthdate-input"
-                className="input font-mono"
+                onChange={(e) => {
+                  setFormData({ ...formData, birthDate: e.target.value });
+                  setTouched((t) => ({ ...t, birthDate: true }));
+                }}
+                testId="cross-birthdate-input"
+                error={!!(touched.birthDate && errors.birthDate)}
+                placeholder="dd/mm/aaaa"
               />
             </Field>
           </div>
@@ -345,15 +355,15 @@ export default function CrossValidationForm() {
           {isMinor && (
             <div
               data-testid="cross-tutor-container"
-              className="mt-4 rounded-2xl border border-warning-300 bg-warning-50/60 p-4 space-y-3 animate-fade-in"
+              className="mt-6 rounded-2xl border border-warning-300 bg-warning-50/70 p-5 space-y-4 animate-fade-in shadow-soft"
             >
               <div className="flex items-center gap-2 text-warning-800 text-xs font-bold">
-                <AlertTriangle className="h-4 w-4 text-warning-600" />
+                <AlertTriangle className="h-4 w-4 text-warning-600 shrink-0" />
                 <span>REGLA CRUZADA ACTIVADA: Requiere datos del Tutor Legal (Menor de 18 años)</span>
                 <LocatorHint testId="cross-tutor-name-input" />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                 <Field
                   label="Nombre del Tutor Legal"
                   htmlFor="cross-tutor-name"
@@ -368,7 +378,7 @@ export default function CrossValidationForm() {
                     onBlur={() => setTouched((t) => ({ ...t, tutorName: true }))}
                     data-testid="cross-tutor-name-input"
                     className="input bg-white"
-                    placeholder="Nombre completo del padre o tutor"
+                    placeholder="Nombre completo del tutor"
                   />
                 </Field>
 
@@ -392,30 +402,31 @@ export default function CrossValidationForm() {
               </div>
             </div>
           )}
-        </div>
+        </section>
 
         {/* SECCIÓN 2: TIPO DE EMPLEO Y SUBORDINACIÓN */}
-        <div>
-          <h4 className="text-sm font-bold text-moss-900 border-b border-moss-200/80 pb-2 mb-4 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-moss-600" /> 2. Modalidad de Contratación
-          </h4>
+        <section className="form-section">
+          <div className="form-section-header">
+            <Briefcase className="h-4 w-4 text-moss-600" />
+            <span>2. Modalidad de Contratación</span>
+          </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-3">
             <div>
               <label htmlFor="cross-employment-type" className="label">
                 <span>Tipo de Empleado</span>
                 <LocatorHint testId="cross-employment-type-select" />
               </label>
-              <select
+              <CustomSelect
                 id="cross-employment-type"
                 value={formData.employmentType}
                 onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-                data-testid="cross-employment-type-select"
-                className="input cursor-pointer"
-              >
-                <option value="permanent">Empleado Permanente (Fijo)</option>
-                <option value="contractor">Contratista Externo (Freelance / Vendor)</option>
-              </select>
+                testId="cross-employment-type-select"
+                options={[
+                  { value: 'permanent', label: 'Empleado Permanente (Fijo)' },
+                  { value: 'contractor', label: 'Contratista Externo (Freelance / Vendor)' },
+                ]}
+              />
             </div>
 
             {/* Condicionales si es Contratista */}
@@ -461,15 +472,16 @@ export default function CrossValidationForm() {
               </>
             )}
           </div>
-        </div>
+        </section>
 
         {/* SECCIÓN 3: RANGOS SALARIALES CON VALIDACIÓN MUTUA */}
-        <div>
-          <h4 className="text-sm font-bold text-moss-900 border-b border-moss-200/80 pb-2 mb-4 flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-moss-600" /> 3. Expectativa Salarial (Mínimo vs Máximo)
-          </h4>
+        <section className="form-section">
+          <div className="form-section-header">
+            <DollarSign className="h-4 w-4 text-moss-600" />
+            <span>3. Expectativa Salarial (Mínimo vs Máximo)</span>
+          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
             <Field
               label="Salario Mínimo Aceptable ($)"
               htmlFor="cross-min-salary"
@@ -510,20 +522,22 @@ export default function CrossValidationForm() {
               />
             </Field>
           </div>
-        </div>
+        </section>
 
         {/* SECCIÓN 4: CANALES DE NOTIFICACIÓN Y TELÉFONO CONDICIONAL */}
-        <div>
-          <h4 className="text-sm font-bold text-moss-900 border-b border-moss-200/80 pb-2 mb-4 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-moss-600" /> 4. Canales de Notificación
-          </h4>
+        <section className="form-section">
+          <div className="form-section-header">
+            <Bell className="h-4 w-4 text-moss-600" />
+            <span>4. Canales de Notificación</span>
+          </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs text-moss-600">
-              Selecciona tus canales preferidos. Si seleccionas SMS, el teléfono es obligatorio.
+              Selecciona tus canales preferidos. Si seleccionas SMS, el número de teléfono móvil es
+              obligatorio.
             </p>
 
-            <div className="flex flex-wrap gap-5">
+            <div className="flex flex-wrap gap-6 py-1">
               <Checkbox
                 id="cross-notify-email"
                 checked={formData.notifyEmail}
@@ -554,12 +568,13 @@ export default function CrossValidationForm() {
             )}
 
             {/* Teléfono obligatorio si SMS está marcado */}
-            <div className="max-w-xs pt-2">
+            <div className="max-w-md pt-2">
               <Field
                 label="Número de Teléfono Móvil"
                 htmlFor="cross-phone"
                 testId="cross-phone-input"
                 error={touched.phone && errors.phone}
+                hint="10 dígitos obligatorios si activas notificaciones por SMS"
                 required={formData.notifySms}
                 optional={!formData.notifySms}
               >
@@ -575,15 +590,16 @@ export default function CrossValidationForm() {
               </Field>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* SECCIÓN 5: CARGA DE ARCHIVO CON VALIDACIÓN DE TIPO Y TAMAÑO */}
-        <div>
-          <h4 className="text-sm font-bold text-moss-900 border-b border-moss-200/80 pb-2 mb-4 flex items-center gap-2">
-            <Upload className="h-4 w-4 text-moss-600" /> 5. Carga de Documento (PDF/PNG/JPG máx 2MB)
-          </h4>
+        <section className="form-section">
+          <div className="form-section-header">
+            <Upload className="h-4 w-4 text-moss-600" />
+            <span>5. Carga de Documento (PDF/PNG/JPG máx 2MB)</span>
+          </div>
 
-          <div className="rounded-2xl border-2 border-dashed border-moss-300 p-6 text-center hover:border-moss-500 transition-colors bg-moss-50/40">
+          <div className="rounded-2xl border-2 border-dashed border-moss-300 p-8 text-center hover:border-moss-500 transition-colors bg-moss-50/40">
             <input
               type="file"
               id="cross-file-upload"
@@ -594,12 +610,12 @@ export default function CrossValidationForm() {
             />
             <label
               htmlFor="cross-file-upload"
-              className="cursor-pointer flex flex-col items-center justify-center space-y-2"
+              className="cursor-pointer flex flex-col items-center justify-center space-y-2.5"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-moss-200 text-moss-700">
-                <Upload className="h-6 w-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-moss-200 text-moss-700 shadow-soft">
+                <Upload className="h-7 w-7" />
               </div>
-              <span className="text-sm font-semibold text-moss-900">
+              <span className="text-sm font-bold text-moss-900">
                 Haz clic para seleccionar o arrastra tu archivo aquí
               </span>
               <span className="text-xs text-moss-500">Formatos: PDF, PNG, JPG (Hasta 2MB)</span>
@@ -613,17 +629,17 @@ export default function CrossValidationForm() {
 
             {uploadedFile && (
               <div
-                className="mt-4 rounded-xl bg-white p-3 border border-moss-200 text-left flex items-center justify-between"
+                className="mt-5 rounded-xl bg-white p-4 border border-moss-200 text-left flex items-center justify-between shadow-sm"
                 data-testid="cross-file-preview"
               >
-                <div className="flex items-center gap-2">
-                  <Paperclip className="h-4 w-4 text-moss-600 shrink-0" />
+                <div className="flex items-center gap-3">
+                  <Paperclip className="h-5 w-5 text-moss-600 shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-moss-900 truncate max-w-xs">
+                    <p className="text-xs font-bold text-moss-900 truncate max-w-sm">
                       {uploadedFile.name}
                     </p>
-                    <p className="text-[10px] text-moss-500 font-mono">
-                      {(uploadedFile.size / 1024).toFixed(1)} KB · {fileProgress}%
+                    <p className="text-[11px] text-moss-500 font-mono">
+                      {(uploadedFile.size / 1024).toFixed(1)} KB · Estado: {fileProgress}%
                     </p>
                   </div>
                 </div>
@@ -634,24 +650,25 @@ export default function CrossValidationForm() {
                     setFileProgress(0);
                   }}
                   data-testid="cross-file-remove-btn"
-                  className="text-moss-400 hover:text-danger-600 p-1"
+                  className="rounded-lg p-1.5 text-moss-400 hover:text-danger-600 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* SECCIÓN 6: CANDADO DE TÉRMINOS Y CONDICIONES */}
-        <div className="rounded-2xl bg-moss-50/80 p-4 border border-moss-200/80 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="form-section bg-moss-50/70 border-moss-300">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-moss-700">
+              <p className="text-xs font-bold uppercase tracking-wider text-moss-800">
                 Candado de Términos Legales
               </p>
-              <p className="text-xs text-moss-600">
-                El checkbox de aceptación solo se habilitará una vez que abras y leas el documento.
+              <p className="text-xs text-moss-600 mt-0.5">
+                La casilla de aceptación solo se habilitará una vez que abras y leas el documento
+                completo.
               </p>
             </div>
             <button
@@ -660,7 +677,7 @@ export default function CrossValidationForm() {
               data-testid="view-terms-modal-btn"
               className="btn btn-secondary btn-sm"
             >
-              <FileText className="h-3.5 w-3.5" /> Leer Términos y Condiciones
+              <FileCheck2 className="h-4 w-4" /> Leer Términos y Condiciones
             </button>
           </div>
 
@@ -677,15 +694,15 @@ export default function CrossValidationForm() {
             testId="cross-terms-checkbox"
             error={touched.termsAccepted && errors.termsAccepted}
           />
-        </div>
+        </section>
 
         {/* BOTÓN SUBMIT */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-moss-100">
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-moss-200">
           <button
             type="submit"
             disabled={submitting}
             data-testid="cross-submit-btn"
-            className="btn btn-primary btn-lg"
+            className="btn btn-primary btn-lg shadow-lift"
           >
             {submitting ? (
               <>
@@ -704,7 +721,7 @@ export default function CrossValidationForm() {
       {submitSuccess && (
         <div
           data-testid="cross-submit-success-card"
-          className="rounded-2xl border border-moss-600/30 bg-moss-600/10 p-5 space-y-3 animate-slide-up"
+          className="rounded-2xl border border-moss-600/30 bg-moss-600/10 p-6 space-y-3 animate-slide-up shadow-soft"
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-moss-600" />
@@ -714,7 +731,7 @@ export default function CrossValidationForm() {
           </div>
           <pre
             data-testid="cross-submit-payload"
-            className="font-mono text-xs text-moss-900 bg-white/80 p-4 rounded-xl overflow-x-auto"
+            className="font-mono text-xs text-moss-900 bg-white/90 p-4 rounded-xl overflow-x-auto shadow-sm"
           >
             {JSON.stringify(submitSuccess, null, 2)}
           </pre>

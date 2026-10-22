@@ -35,6 +35,7 @@ import {
 } from '../../utils/validators';
 import { simulateRequest, NetworkError } from '../../services/network';
 import { Field, Checkbox } from '../../components/ui/Field';
+import CustomSelect from '../../components/ui/CustomSelect';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { Alert, Spinner } from '../../components/ui/Primitives';
 
@@ -429,23 +430,23 @@ export default function Checkout() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <label htmlFor="ship-country" className="label">
-                    <span>País</span>
+                <div className="space-y-2">
+                  <label htmlFor="ship-country" className="label flex items-center justify-between">
+                    <span className="font-medium text-moss-800">País</span>
                     <LocatorHint testId="ship-country-select" />
                   </label>
-                  <select
+                  <CustomSelect
                     id="ship-country"
+                    testId="ship-country-select"
                     value={address.country}
                     onChange={(e) => setAddress({ ...address, country: e.target.value, postalCode: '' })}
-                    data-testid="ship-country-select"
-                    className="input cursor-pointer"
-                  >
-                    <option value="MX">México (+52)</option>
-                    <option value="US">Estados Unidos (+1)</option>
-                    <option value="ES">España (+34)</option>
-                    <option value="CO">Colombia (+57)</option>
-                  </select>
+                    options={[
+                      { value: 'MX', label: 'México (+52)' },
+                      { value: 'US', label: 'Estados Unidos (+1)' },
+                      { value: 'ES', label: 'España (+34)' },
+                      { value: 'CO', label: 'Colombia (+57)' },
+                    ]}
+                  />
                 </div>
 
                 <div className="sm:col-span-2">
@@ -679,30 +680,26 @@ export default function Checkout() {
               {paymentMethod === 'card' ? (
                 <div className="space-y-4 pt-2">
                   {/* Selector rápido de tarjetas de prueba para automatizadores */}
-                  <div className="rounded-xl border border-moss-200 bg-moss-50 p-3">
+                  <div className="rounded-xl border border-moss-200 bg-moss-50/80 p-3 space-y-2">
                     <label
                       htmlFor="test-cards-select"
-                      className="label !mb-1 text-xs font-semibold text-moss-800"
+                      className="label !mb-0 flex items-center justify-between text-xs font-semibold text-moss-800"
                     >
-                      <span>🧪 Autocompletar tarjeta de prueba:</span>
+                      <span className="flex items-center gap-1.5">🧪 Autocompletar tarjeta de prueba:</span>
                       <LocatorHint testId="checkout-test-cards-select" />
                     </label>
-                    <select
+                    <CustomSelect
                       id="test-cards-select"
+                      testId="checkout-test-cards-select"
+                      size="sm"
+                      placeholder="Selecciona un escenario de prueba..."
+                      value=""
                       onChange={handleSelectTestCard}
-                      defaultValue=""
-                      data-testid="checkout-test-cards-select"
-                      className="input text-xs cursor-pointer"
-                    >
-                      <option value="" disabled>
-                        Selecciona un escenario de prueba...
-                      </option>
-                      {TEST_CARDS.map((tc) => (
-                        <option key={tc.number} value={tc.number}>
-                          {tc.label} (Terminación ...{tc.number.slice(-4)})
-                        </option>
-                      ))}
-                    </select>
+                      options={TEST_CARDS.map((tc) => ({
+                        value: tc.number,
+                        label: `${tc.label} (Terminación ...${tc.number.slice(-4)})`,
+                      }))}
+                    />
                   </div>
 
                   <Field

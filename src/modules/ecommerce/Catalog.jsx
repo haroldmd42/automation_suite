@@ -18,6 +18,7 @@ import { useDebounce } from '../../hooks/common';
 import { simulateRequest } from '../../services/network';
 import Modal from '../../components/ui/Modal';
 import { Field, Checkbox } from '../../components/ui/Field';
+import CustomSelect from '../../components/ui/CustomSelect';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { Spinner, Skeleton } from '../../components/ui/Primitives';
 
@@ -127,45 +128,42 @@ export default function Catalog() {
           </div>
 
           {/* Categoría */}
-          <div>
-            <label htmlFor="catalog-category" className="label">
-              <span>Categoría</span>
+          <div className="space-y-2">
+            <label htmlFor="catalog-category" className="label flex items-center justify-between">
+              <span className="font-medium text-moss-800">Categoría</span>
               <LocatorHint testId="catalog-category-select" />
             </label>
-            <select
+            <CustomSelect
               id="catalog-category"
+              testId="catalog-category-select"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              data-testid="catalog-category-select"
-              className="input cursor-pointer"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
+              options={CATEGORIES.map((cat) => ({
+                value: cat.id,
+                label: cat.label,
+              }))}
+            />
           </div>
 
           {/* Ordenamiento */}
-          <div>
-            <label htmlFor="catalog-sort" className="label">
-              <span>Ordenar por</span>
+          <div className="space-y-2">
+            <label htmlFor="catalog-sort" className="label flex items-center justify-between">
+              <span className="font-medium text-moss-800">Ordenar por</span>
               <LocatorHint testId="catalog-sort-select" />
             </label>
-            <select
+            <CustomSelect
               id="catalog-sort"
+              testId="catalog-sort-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              data-testid="catalog-sort-select"
-              className="input cursor-pointer"
-            >
-              <option value="featured">Destacados</option>
-              <option value="price_asc">Precio: Menor a Mayor</option>
-              <option value="price_desc">Precio: Mayor a Menor</option>
-              <option value="rating">Mejor Calificados</option>
-              <option value="name">Alfabético (A-Z)</option>
-            </select>
+              options={[
+                { value: 'featured', label: 'Destacados' },
+                { value: 'price_asc', label: 'Precio: Menor a Mayor' },
+                { value: 'price_desc', label: 'Precio: Mayor a Menor' },
+                { value: 'rating', label: 'Mejor Calificados' },
+                { value: 'name', label: 'Alfabético (A-Z)' },
+              ]}
+            />
           </div>
 
           {/* Checkbox solo en stock & Reset */}

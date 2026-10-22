@@ -22,6 +22,7 @@ import { useDebounce } from '../../hooks/common';
 import { simulateRequest } from '../../services/network';
 import { PageHeader, Spinner, Skeleton, Alert } from '../../components/ui/Primitives';
 import { Checkbox } from '../../components/ui/Field';
+import CustomSelect from '../../components/ui/CustomSelect';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/ui/Modal';
@@ -311,22 +312,22 @@ export default function DataTableModule() {
               <span>Estado de Transacción</span>
               <LocatorHint testId="table-status-filter" />
             </label>
-            <select
+            <CustomSelect
               id="table-status-filter"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              data-testid="table-status-filter"
-              className="input cursor-pointer"
-            >
-              <option value="all">Todos los Estados</option>
-              <option value="completed">Completado</option>
-              <option value="pending">Pendiente</option>
-              <option value="review">En Revisión</option>
-              <option value="cancelled">Cancelado</option>
-            </select>
+              testId="table-status-filter"
+              options={[
+                { value: 'all', label: 'Todos los Estados' },
+                { value: 'completed', label: 'Completado' },
+                { value: 'pending', label: 'Pendiente' },
+                { value: 'review', label: 'En Revisión' },
+                { value: 'cancelled', label: 'Cancelado' },
+              ]}
+            />
           </div>
 
           {/* Filtro de Método de Pago */}
@@ -335,23 +336,23 @@ export default function DataTableModule() {
               <span>Método de Pago</span>
               <LocatorHint testId="table-payment-filter" />
             </label>
-            <select
+            <CustomSelect
               id="table-payment-filter"
               value={paymentFilter}
               onChange={(e) => {
                 setPaymentFilter(e.target.value);
                 setPage(1);
               }}
-              data-testid="table-payment-filter"
-              className="input cursor-pointer"
-            >
-              <option value="all">Todos los Métodos</option>
-              <option value="Tarjeta Visa">Tarjeta Visa</option>
-              <option value="Mastercard">Mastercard</option>
-              <option value="SPEI / Transferencia">SPEI / Transferencia</option>
-              <option value="PayPal">PayPal</option>
-              <option value="Cripto / USDT">Cripto / USDT</option>
-            </select>
+              testId="table-payment-filter"
+              options={[
+                { value: 'all', label: 'Todos los Métodos' },
+                { value: 'Tarjeta Visa', label: 'Tarjeta Visa' },
+                { value: 'Mastercard', label: 'Mastercard' },
+                { value: 'SPEI / Transferencia', label: 'SPEI / Transferencia' },
+                { value: 'PayPal', label: 'PayPal' },
+                { value: 'Cripto / USDT', label: 'Cripto / USDT' },
+              ]}
+            />
           </div>
 
           {/* Rango de Montos */}
@@ -461,24 +462,27 @@ export default function DataTableModule() {
         {/* Cabecera de controles superiores: tamaño de página y exportación */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-moss-200/80 bg-moss-50/50 p-4 text-xs text-moss-700">
           <div className="flex items-center gap-2">
-            <label htmlFor="table-page-size-select" className="font-medium">
+            <label htmlFor="table-page-size-select" className="font-medium text-moss-800">
               Mostrar:
             </label>
-            <select
-              id="table-page-size-select"
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(parseInt(e.target.value, 10));
-                setPage(1);
-              }}
-              data-testid="table-page-size-select"
-              className="rounded-lg border border-moss-300 bg-white py-1 pl-2 pr-6 text-xs font-semibold"
-            >
-              <option value="5">5 filas</option>
-              <option value="10">10 filas</option>
-              <option value="25">25 filas</option>
-              <option value="50">50 filas</option>
-            </select>
+            <div className="w-28">
+              <CustomSelect
+                id="table-page-size-select"
+                testId="table-page-size-select"
+                value={String(pageSize)}
+                onChange={(e) => {
+                  setPageSize(parseInt(e.target.value, 10));
+                  setPage(1);
+                }}
+                size="sm"
+                options={[
+                  { value: '5', label: '5 filas' },
+                  { value: '10', label: '10 filas' },
+                  { value: '25', label: '25 filas' },
+                  { value: '50', label: '50 filas' },
+                ]}
+              />
+            </div>
             <span>por página</span>
           </div>
 

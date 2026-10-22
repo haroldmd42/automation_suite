@@ -79,7 +79,7 @@
   }
 
   /* Forms */
-  .label { @apply mb-1.5 flex items-center gap-1.5 text-sm font-medium text-moss-800; }
+  .label { @apply mb-2 flex items-center gap-1.5 text-sm font-semibold text-moss-800; }
   .input {
     @apply block w-full rounded-xl border border-moss-300 bg-white/90 px-3.5 py-2.5 text-sm text-moss-950
       shadow-sm transition placeholder:text-moss-500/80
@@ -90,11 +90,19 @@
     @apply border-danger-500 bg-danger-50/60 focus:border-danger-600 focus:ring-danger-500/15;
   }
   .input-success { @apply border-moss-600; }
-  .field-error { @apply mt-1.5 flex items-start gap-1 text-xs font-medium text-danger-600; }
-  .field-hint { @apply mt-1.5 text-xs text-moss-600; }
+  .field-error { @apply mt-2 mb-1 flex items-start gap-1.5 text-xs font-semibold text-danger-600 leading-snug; }
+  .field-hint { @apply mt-1.5 text-xs text-moss-600 leading-relaxed; }
 
   .checkbox {
     @apply h-4 w-4 cursor-pointer rounded border-moss-400 accent-moss-600;
+  }
+
+  /* Form Sections with generous breathing room */
+  .form-section {
+    @apply rounded-2xl border border-moss-200/80 bg-white/75 p-5 sm:p-6 shadow-soft transition-shadow;
+  }
+  .form-section-header {
+    @apply flex items-center gap-2.5 text-sm font-bold uppercase tracking-wider text-moss-900 border-b border-moss-200/80 pb-3 mb-5;
   }
 
   /* Surfaces */

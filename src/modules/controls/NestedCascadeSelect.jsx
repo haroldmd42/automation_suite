@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { MapPin, Globe, Building2, CheckCircle2, RotateCcw } from 'lucide-react';
 import { GEO_DATA } from './controlsData';
 import { simulateRequest } from '../../services/network';
-import { Field } from '../../components/ui/Field';
+import CustomSelect from '../../components/ui/CustomSelect';
 import LocatorHint from '../../components/qa/LocatorHint';
-import { Spinner, Alert } from '../../components/ui/Primitives';
+import { Spinner } from '../../components/ui/Primitives';
 
 export default function NestedCascadeSelect() {
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -54,12 +54,48 @@ export default function NestedCascadeSelect() {
 
   const isComplete = selectedCountry && selectedState && selectedCity;
 
+  const countryOptions = [
+    { value: '', label: '-- Selecciona un País --' },
+    ...Object.values(GEO_DATA).map((c) => ({
+      value: c.code,
+      label: `${c.name} (${c.code})`,
+    })),
+  ];
+
+  const statePlaceholder = !selectedCountry
+    ? '-- Selecciona País primero --'
+    : loadingStates
+    ? 'Cargando estados...'
+    : '-- Selecciona Estado --';
+
+  const stateOptions = [
+    { value: '', label: statePlaceholder },
+    ...statesList.map(([code, s]) => ({
+      value: code,
+      label: s.name,
+    })),
+  ];
+
+  const cityPlaceholder = !selectedState
+    ? '-- Selecciona Estado primero --'
+    : loadingCities
+    ? 'Cargando ciudades...'
+    : '-- Selecciona Ciudad --';
+
+  const cityOptions = [
+    { value: '', label: cityPlaceholder },
+    ...citiesList.map((city) => ({
+      value: city,
+      label: city,
+    })),
+  ];
+
   return (
     <div data-testid="nested-cascade-container" className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-moss-900">Cascada Asíncrona (País → Estado → Ciudad)</h3>
-          <p className="text-sm text-moss-600">
+          <p className="text-sm text-moss-600 mt-0.5">
             Cada selección desencadena una carga asíncrona simulada (1.5 - 2s). Deshabilita los
             controles dependientes durante el estado de espera.
           </p>
@@ -68,7 +104,7 @@ export default function NestedCascadeSelect() {
           type="button"
           onClick={handleReset}
           data-testid="cascade-reset-btn"
-          className="btn btn-secondary btn-sm"
+          className="btn btn-secondary btn-sm self-start sm:self-auto shrink-0"
         >
           <RotateCcw className="h-3.5 w-3.5" /> Reiniciar
         </button>
@@ -76,88 +112,64 @@ export default function NestedCascadeSelect() {
 
       <div className="card p-6 grid gap-6 md:grid-cols-3">
         {/* Nivel 1: País */}
-        <div>
-          <label htmlFor="cascade-country" className="label">
-            <Globe className="h-4 w-4 text-moss-600" />
-            <span>1. País</span>
+        <div className="space-y-2">
+          <label htmlFor="cascade-country" className="label flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-medium text-moss-800">
+              <Globe className="h-4 w-4 text-moss-600" />
+              <span>1. País</span>
+            </span>
             <LocatorHint testId="cascade-country-select" />
           </label>
-          <select
+          <CustomSelect
             id="cascade-country"
+            testId="cascade-country-select"
             value={selectedCountry}
             onChange={handleCountryChange}
-            data-testid="cascade-country-select"
-            className="input cursor-pointer"
-          >
-            <option value="">-- Selecciona un País --</option>
-            {Object.values(GEO_DATA).map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
+            options={countryOptions}
+            placeholder="-- Selecciona un País --"
+          />
         </div>
 
         {/* Nivel 2: Estado / Provincia */}
-        <div>
-          <label htmlFor="cascade-state" className="label">
-            <Building2 className="h-4 w-4 text-moss-600" />
-            <span>2. Estado / Región</span>
+        <div className="space-y-2">
+          <label htmlFor="cascade-state" className="label flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-medium text-moss-800">
+              <Building2 className="h-4 w-4 text-moss-600" />
+              <span>2. Estado / Región</span>
+              {loadingStates && <Spinner className="h-3.5 w-3.5 text-moss-600 ml-1.5" testId="cascade-state-spinner" />}
+            </span>
             <LocatorHint testId="cascade-state-select" />
-            {loadingStates && <Spinner className="h-3.5 w-3.5 text-moss-600 ml-auto" testId="cascade-state-spinner" />}
           </label>
-          <select
+          <CustomSelect
             id="cascade-state"
+            testId="cascade-state-select"
             value={selectedState}
             onChange={handleStateChange}
             disabled={!selectedCountry || loadingStates}
-            data-testid="cascade-state-select"
-            className="input cursor-pointer disabled:bg-moss-100 disabled:cursor-not-allowed"
-          >
-            <option value="">
-              {!selectedCountry
-                ? '-- Selecciona País primero --'
-                : loadingStates
-                ? 'Cargando estados...'
-                : '-- Selecciona Estado --'}
-            </option>
-            {statesList.map(([code, s]) => (
-              <option key={code} value={code}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            options={stateOptions}
+            placeholder={statePlaceholder}
+          />
         </div>
 
         {/* Nivel 3: Ciudad / Municipio */}
-        <div>
-          <label htmlFor="cascade-city" className="label">
-            <MapPin className="h-4 w-4 text-moss-600" />
-            <span>3. Ciudad / Municipio</span>
+        <div className="space-y-2">
+          <label htmlFor="cascade-city" className="label flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-medium text-moss-800">
+              <MapPin className="h-4 w-4 text-moss-600" />
+              <span>3. Ciudad / Municipio</span>
+              {loadingCities && <Spinner className="h-3.5 w-3.5 text-moss-600 ml-1.5" testId="cascade-city-spinner" />}
+            </span>
             <LocatorHint testId="cascade-city-select" />
-            {loadingCities && <Spinner className="h-3.5 w-3.5 text-moss-600 ml-auto" testId="cascade-city-spinner" />}
           </label>
-          <select
+          <CustomSelect
             id="cascade-city"
+            testId="cascade-city-select"
             value={selectedCity}
             onChange={(e) => setSelectedCity(e.target.value)}
             disabled={!selectedState || loadingCities}
-            data-testid="cascade-city-select"
-            className="input cursor-pointer disabled:bg-moss-100 disabled:cursor-not-allowed"
-          >
-            <option value="">
-              {!selectedState
-                ? '-- Selecciona Estado primero --'
-                : loadingCities
-                ? 'Cargando ciudades...'
-                : '-- Selecciona Ciudad --'}
-            </option>
-            {citiesList.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
+            options={cityOptions}
+            placeholder={cityPlaceholder}
+          />
         </div>
       </div>
 
