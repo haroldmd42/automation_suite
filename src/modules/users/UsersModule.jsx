@@ -22,6 +22,7 @@ import {
   Check,
   X,
   Sparkles,
+  Pencil,
 } from 'lucide-react';
 import { simulateRequest } from '../../services/network';
 import { formatDateES, cn } from '../../utils/format';
@@ -84,11 +85,12 @@ export default function UsersModule() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Formulario de creación
+  // Formulario de creación / edición
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [touched, setTouched] = useState({});
 
@@ -118,21 +120,21 @@ export default function UsersModule() {
       errs.fullName = 'Solo se permiten letras y espacios';
     }
 
-    // 2. Nombre de usuario
+    // 2. Nombre de usuario (unicidad ignorando el usuario actual en edición)
     if (!formData.username.trim()) {
       errs.username = 'El nombre de usuario es obligatorio';
     } else if (!/^[a-z0-9_]{3,15}$/.test(formData.username.trim())) {
       errs.username = 'Debe tener entre 3 y 15 caracteres (solo letras minúsculas, números o guion bajo)';
-    } else if (users.some((u) => u.username.toLowerCase() === formData.username.trim().toLowerCase())) {
+    } else if (users.some((u) => u.id !== editingUser?.id && u.username.toLowerCase() === formData.username.trim().toLowerCase())) {
       errs.username = 'Este nombre de usuario ya está registrado en el sistema';
     }
 
-    // 3. Correo electrónico
+    // 3. Correo electrónico (unicidad ignorando el usuario actual en edición)
     if (!formData.email.trim()) {
       errs.email = 'El correo electrónico es obligatorio';
     } else if (!EMAIL_RE.test(formData.email.trim())) {
       errs.email = 'Formato de correo no válido (ej. usuario@dominio.com)';
-    } else if (users.some((u) => u.email.toLowerCase() === formData.email.trim().toLowerCase())) {
+    } else if (users.some((u) => u.id !== editingUser?.id && u.email.toLowerCase() === formData.email.trim().toLowerCase())) {
       errs.email = 'Este correo electrónico ya está en uso por otro usuario';
     }
 
@@ -163,27 +165,59 @@ export default function UsersModule() {
       errs.permissions = 'Debes otorgar al menos un permiso o privilegio al usuario';
     }
 
-    // 9. Contraseña
-    if (!formData.password) {
-      errs.password = 'La contraseña temporal es obligatoria';
-    } else if (!isPasswordValid) {
-      errs.password = 'La contraseña no cumple con todas las políticas de seguridad';
-    }
+    // 9. Contraseña (en edición es opcional si desea conservar la existente)
+    const isEditing = !!editingUser;
+    if (!isEditing) {
+      if (!formData.password) {
+        errs.password = 'La contraseña temporal es obligatoria';
+      } else if (!isPasswordValid) {
+        errs.password = 'La contraseña no cumple con todas las políticas de seguridad';
+      }
 
-    // 10. Confirmación de contraseña
-    if (!formData.confirmPassword) {
-      errs.confirmPassword = 'Debes confirmar la contraseña';
-    } else if (formData.password !== formData.confirmPassword) {
-      errs.confirmPassword = 'Las contraseñas no coinciden';
+      if (!formData.confirmPassword) {
+        errs.confirmPassword = 'Debes confirmar la contraseña';
+      } else if (formData.password !== formData.confirmPassword) {
+        errs.confirmPassword = 'Las contraseñas no coinciden';
+      }
+    } else if (formData.password) {
+      if (!isPasswordValid) {
+        errs.password = 'La nueva contraseña no cumple con las políticas de seguridad';
+      }
+
+      if (!formData.confirmPassword) {
+        errs.confirmPassword = 'Debes confirmar la nueva contraseña';
+      } else if (formData.password !== formData.confirmPassword) {
+        errs.confirmPassword = 'Las contraseñas no coinciden';
+      }
     }
 
     return errs;
   };
 
-  const errors = useMemo(() => validateForm(), [formData, users, isPasswordValid]);
+  const errors = useMemo(() => validateForm(), [formData, users, isPasswordValid, editingUser]);
 
   const handleOpenCreateModal = () => {
+    setEditingUser(null);
     setFormData(INITIAL_FORM);
+    setTouched({});
+    setCreateModalOpen(true);
+  };
+
+  const handleOpenEditModal = (user) => {
+    setEditingUser(user);
+    setFormData({
+      fullName: user.fullName,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      department: user.department,
+      hireDate: user.hireDate,
+      status: user.status,
+      permissions: [...(user.permissions || [])],
+      password: '',
+      confirmPassword: '',
+    });
     setTouched({});
     setCreateModalOpen(true);
   };
@@ -191,6 +225,7 @@ export default function UsersModule() {
   const handleResetToEmpty = () => {
     setUsers([]);
     setSelectedUser(null);
+    setEditingUser(null);
     toast.info('Listado restablecido a estado inicial vacío');
   };
 
@@ -205,7 +240,7 @@ export default function UsersModule() {
     setTouched((t) => ({ ...t, permissions: true }));
   };
 
-  const handleCreateSubmit = async (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     // Marcar todos los campos como tocados
@@ -219,28 +254,54 @@ export default function UsersModule() {
 
     setSubmitting(true);
     try {
-      await simulateRequest(() => {}, { minDelay: 400, maxDelay: 900, canFail: false });
+      await simulateRequest(() => {}, { minDelay: 350, maxDelay: 750, canFail: false });
 
-      const newId = `USR-${Math.floor(1000 + Math.random() * 9000)}`;
-      const newUser = {
-        id: newId,
-        fullName: formData.fullName.trim(),
-        username: formData.username.trim().toLowerCase(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
-        role: formData.role,
-        department: formData.department,
-        hireDate: formData.hireDate,
-        status: formData.status,
-        permissions: [...formData.permissions],
-        createdAt: new Date().toISOString(),
-      };
+      if (editingUser) {
+        // ACTUALIZACIÓN DE USUARIO EXISTENTE
+        const updatedUser = {
+          ...editingUser,
+          fullName: formData.fullName.trim(),
+          username: formData.username.trim().toLowerCase(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
+          role: formData.role,
+          department: formData.department,
+          hireDate: formData.hireDate,
+          status: formData.status,
+          permissions: [...formData.permissions],
+          updatedAt: new Date().toISOString(),
+        };
 
-      setUsers((prev) => [newUser, ...prev]);
-      setCreateModalOpen(false);
-      toast.success(`Usuario ${newUser.fullName} (${newUser.id}) creado exitosamente`);
+        setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? updatedUser : u)));
+        if (selectedUser?.id === editingUser.id) {
+          setSelectedUser(updatedUser);
+        }
+        setEditingUser(null);
+        setCreateModalOpen(false);
+        toast.success(`Usuario ${updatedUser.fullName} (${updatedUser.id}) actualizado exitosamente`);
+      } else {
+        // CREACIÓN DE NUEVO USUARIO
+        const newId = `USR-${Math.floor(1000 + Math.random() * 9000)}`;
+        const newUser = {
+          id: newId,
+          fullName: formData.fullName.trim(),
+          username: formData.username.trim().toLowerCase(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
+          role: formData.role,
+          department: formData.department,
+          hireDate: formData.hireDate,
+          status: formData.status,
+          permissions: [...formData.permissions],
+          createdAt: new Date().toISOString(),
+        };
+
+        setUsers((prev) => [newUser, ...prev]);
+        setCreateModalOpen(false);
+        toast.success(`Usuario ${newUser.fullName} (${newUser.id}) creado exitosamente`);
+      }
     } catch {
-      toast.error('Error al registrar usuario en el servidor');
+      toast.error('Error al guardar datos del usuario');
     } finally {
       setSubmitting(false);
     }
@@ -445,10 +506,19 @@ export default function UsersModule() {
                           </div>
                           <div className="min-w-0">
                             <p
-                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm truncate"
+                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm truncate flex items-center gap-1.5"
                               data-testid={`user-name-${user.id}`}
                             >
-                              {user.fullName}
+                              <span>{user.fullName}</span>
+                              {user.updatedAt && (
+                                <span
+                                  data-testid={`user-updated-badge-${user.id}`}
+                                  className="badge badge-moss text-[9px] py-0 px-1 font-mono font-normal"
+                                  title={`Modificado: ${user.updatedAt}`}
+                                >
+                                  editado
+                                </span>
+                              )}
                             </p>
                             <p
                               className="font-mono text-[11px] text-moss-500 truncate"
@@ -533,6 +603,16 @@ export default function UsersModule() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => handleOpenEditModal(user)}
+                            data-testid={`user-edit-btn-${user.id}`}
+                            className="btn btn-secondary !px-2.5 !py-1 text-xs"
+                            title="Editar datos del usuario"
+                          >
+                            <Pencil className="h-3.5 w-3.5 shrink-0 text-moss-600" />
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setDeleteConfirmUser(user)}
                             data-testid={`user-delete-btn-${user.id}`}
                             className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg"
@@ -551,20 +631,24 @@ export default function UsersModule() {
         </section>
       )}
 
-      {/* MODAL 1: FORMULARIO DE CREACIÓN DE USUARIO CON TODAS LAS VALIDACIONES */}
+      {/* MODAL 1: FORMULARIO DE CREACIÓN / EDICIÓN DE USUARIO */}
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="Crear Nuevo Usuario"
-        description="Ingresa la información personal, asignación de rol, departamento y credenciales de acceso."
-        testId="create-user-modal"
+        title={editingUser ? `Editar Usuario: ${editingUser.fullName} (${editingUser.id})` : 'Crear Nuevo Usuario'}
+        description={
+          editingUser
+            ? 'Modifica los datos del usuario y guarda los cambios para comprobar la actualización en el listado y detalle.'
+            : 'Ingresa la información personal, asignación de rol, departamento y credenciales de acceso.'
+        }
+        testId={editingUser ? 'edit-user-modal' : 'create-user-modal'}
         size="lg"
         footer={
           <div className="flex items-center justify-between w-full">
             <button
               type="button"
               onClick={() => setCreateModalOpen(false)}
-              data-testid="cancel-create-user-btn"
+              data-testid={editingUser ? 'cancel-edit-user-btn' : 'cancel-create-user-btn'}
               className="btn btn-secondary"
             >
               Cancelar
@@ -573,12 +657,16 @@ export default function UsersModule() {
               type="submit"
               form="create-user-form"
               disabled={submitting}
-              data-testid="submit-create-user-btn"
+              data-testid={editingUser ? 'submit-edit-user-btn' : 'submit-create-user-btn'}
               className="btn btn-primary"
             >
               {submitting ? (
                 <>
-                  <Spinner className="h-4 w-4" /> Guardando Usuario...
+                  <Spinner className="h-4 w-4" /> Guardando...
+                </>
+              ) : editingUser ? (
+                <>
+                  <Check className="h-4 w-4" /> Guardar Cambios
                 </>
               ) : (
                 <>
@@ -591,9 +679,9 @@ export default function UsersModule() {
       >
         <form
           id="create-user-form"
-          onSubmit={handleCreateSubmit}
+          onSubmit={handleFormSubmit}
           noValidate
-          data-testid="create-user-form"
+          data-testid={editingUser ? 'edit-user-form' : 'create-user-form'}
           className="space-y-6"
         >
           {/* SECCIÓN 1: DATOS PERSONALES */}
@@ -862,11 +950,12 @@ export default function UsersModule() {
             <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
               {/* Contraseña */}
               <Field
-                label="Contraseña Temporal"
+                label={editingUser ? 'Nueva Contraseña (Opcional)' : 'Contraseña Temporal'}
                 htmlFor="user-password"
                 testId="user-password-input"
                 error={touched.password && errors.password}
-                required
+                hint={editingUser ? 'Dejar en blanco para conservar la actual' : undefined}
+                required={!editingUser}
               >
                 <input
                   id="user-password"
@@ -874,7 +963,7 @@ export default function UsersModule() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   onBlur={() => setTouched((t) => ({ ...t, password: true }))}
-                  placeholder="••••••••••••"
+                  placeholder={editingUser ? 'Sin cambios (conservar)' : '••••••••••••'}
                   data-testid="user-password-input"
                   className="input font-mono"
                 />
@@ -882,11 +971,11 @@ export default function UsersModule() {
 
               {/* Confirmar Contraseña */}
               <Field
-                label="Confirmar Contraseña"
+                label={editingUser ? 'Confirmar Nueva Contraseña' : 'Confirmar Contraseña'}
                 htmlFor="user-confirm-password"
                 testId="user-confirm-password-input"
                 error={touched.confirmPassword && errors.confirmPassword}
-                required
+                required={!editingUser || !!formData.password}
               >
                 <input
                   id="user-confirm-password"
@@ -894,59 +983,61 @@ export default function UsersModule() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   onBlur={() => setTouched((t) => ({ ...t, confirmPassword: true }))}
-                  placeholder="••••••••••••"
+                  placeholder={editingUser ? 'Sin cambios (conservar)' : '••••••••••••'}
                   data-testid="user-confirm-password-input"
                   className="input font-mono"
                 />
               </Field>
             </div>
 
-            {/* Checklist de requisitos de contraseña en vivo */}
-            <div className="mt-4 rounded-xl border border-moss-200 bg-moss-50/60 p-3.5 space-y-2">
-              <p className="text-xs font-bold text-moss-800">Políticas de seguridad de contraseña:</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span
-                  className={cn(
-                    'flex items-center gap-1.5 font-medium transition-colors',
-                    passwordRules.minLength ? 'text-moss-700 font-bold' : 'text-moss-400',
-                  )}
-                  data-testid="pwd-rule-minlength"
-                >
-                  {passwordRules.minLength ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
-                  Mínimo 8 caracteres
-                </span>
-                <span
-                  className={cn(
-                    'flex items-center gap-1.5 font-medium transition-colors',
-                    passwordRules.hasUpper ? 'text-moss-700 font-bold' : 'text-moss-400',
-                  )}
-                  data-testid="pwd-rule-upper"
-                >
-                  {passwordRules.hasUpper ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
-                  1 letra mayúscula
-                </span>
-                <span
-                  className={cn(
-                    'flex items-center gap-1.5 font-medium transition-colors',
-                    passwordRules.hasNumber ? 'text-moss-700 font-bold' : 'text-moss-400',
-                  )}
-                  data-testid="pwd-rule-number"
-                >
-                  {passwordRules.hasNumber ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
-                  1 número
-                </span>
-                <span
-                  className={cn(
-                    'flex items-center gap-1.5 font-medium transition-colors',
-                    passwordRules.hasSpecial ? 'text-moss-700 font-bold' : 'text-moss-400',
-                  )}
-                  data-testid="pwd-rule-special"
-                >
-                  {passwordRules.hasSpecial ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
-                  1 caracter especial (!@#$%)
-                </span>
+            {/* Checklist de requisitos de contraseña en vivo (visible si es nuevo o si escribió password) */}
+            {(!editingUser || !!formData.password) && (
+              <div className="mt-4 rounded-xl border border-moss-200 bg-moss-50/60 p-3.5 space-y-2">
+                <p className="text-xs font-bold text-moss-800">Políticas de seguridad de contraseña:</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 font-medium transition-colors',
+                      passwordRules.minLength ? 'text-moss-700 font-bold' : 'text-moss-400',
+                    )}
+                    data-testid="pwd-rule-minlength"
+                  >
+                    {passwordRules.minLength ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
+                    Mínimo 8 caracteres
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 font-medium transition-colors',
+                      passwordRules.hasUpper ? 'text-moss-700 font-bold' : 'text-moss-400',
+                    )}
+                    data-testid="pwd-rule-upper"
+                  >
+                    {passwordRules.hasUpper ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
+                    1 letra mayúscula
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 font-medium transition-colors',
+                      passwordRules.hasNumber ? 'text-moss-700 font-bold' : 'text-moss-400',
+                    )}
+                    data-testid="pwd-rule-number"
+                  >
+                    {passwordRules.hasNumber ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
+                    1 número
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 font-medium transition-colors',
+                      passwordRules.hasSpecial ? 'text-moss-700 font-bold' : 'text-moss-400',
+                    )}
+                    data-testid="pwd-rule-special"
+                  >
+                    {passwordRules.hasSpecial ? <Check className="h-3.5 w-3.5 text-moss-600" /> : <X className="h-3.5 w-3.5" />}
+                    1 caracter especial (!@#$%)
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </form>
       </Modal>
@@ -961,18 +1052,32 @@ export default function UsersModule() {
           testId="user-detail-modal"
           size="lg"
           footer={
-            <div className="flex items-center justify-between w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
               <span className="text-xs text-moss-500 font-mono">
                 ID Registro: <strong data-testid="detail-user-id">{selectedUser.id}</strong>
               </span>
-              <button
-                type="button"
-                onClick={() => setSelectedUser(null)}
-                data-testid="close-detail-modal-btn"
-                className="btn btn-primary btn-sm"
-              >
-                Entendido / Cerrar Detalle
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenEditModal(selectedUser);
+                  }}
+                  data-testid="detail-edit-user-btn"
+                  className="btn btn-secondary btn-sm"
+                  title="Editar este usuario"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-moss-600" />
+                  <span>Editar Usuario</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedUser(null)}
+                  data-testid="close-detail-modal-btn"
+                  className="btn btn-primary btn-sm"
+                >
+                  Entendido / Cerrar
+                </button>
+              </div>
             </div>
           }
         >
@@ -1033,6 +1138,18 @@ export default function UsersModule() {
                   {selectedUser.status === 'pending' && 'Pendiente'}
                   {selectedUser.status === 'suspended' && 'Suspendido'}
                 </span>
+
+                {/* Badge de Editado si existe updatedAt */}
+                {selectedUser.updatedAt && (
+                  <span
+                    data-testid="detail-user-updated-badge"
+                    className="badge badge-moss text-[11px] font-mono"
+                    title={`Modificado el: ${selectedUser.updatedAt}`}
+                  >
+                    <Sparkles className="h-3 w-3 text-moss-600" />
+                    <span>EDITADO</span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1094,6 +1211,37 @@ export default function UsersModule() {
                   {selectedUser.hireDate}
                 </p>
               </div>
+
+              {/* Fecha de Creación */}
+              <div className="rounded-xl border border-moss-200 bg-white p-4 shadow-sm">
+                <span className="text-xs font-bold uppercase tracking-wider text-moss-500">
+                  Fecha de Creación
+                </span>
+                <p
+                  className="mt-1 font-mono font-semibold text-xs text-moss-800 flex items-center gap-2"
+                  data-testid="detail-user-created-at"
+                >
+                  <Calendar className="h-4 w-4 text-moss-600 shrink-0" />
+                  {new Date(selectedUser.createdAt).toLocaleString()}
+                </p>
+              </div>
+
+              {/* Fecha de Última Modificación (si fue editado) */}
+              {selectedUser.updatedAt && (
+                <div className="rounded-xl border border-moss-300 bg-moss-50/60 p-4 shadow-sm">
+                  <span className="text-xs font-bold uppercase tracking-wider text-moss-700 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-moss-600" />
+                    Última Modificación
+                  </span>
+                  <p
+                    className="mt-1 font-mono font-semibold text-xs text-moss-900 flex items-center gap-2"
+                    data-testid="detail-user-updated-at"
+                  >
+                    <Calendar className="h-4 w-4 text-moss-600 shrink-0" />
+                    {new Date(selectedUser.updatedAt).toLocaleString()}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Permisos Otorgados */}
