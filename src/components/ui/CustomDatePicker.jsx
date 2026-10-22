@@ -75,7 +75,15 @@ export default function CustomDatePicker({
     const el = triggerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const calendarHeight = 340;
+
+    // Si el elemento disparador queda fuera de la pantalla durante el scroll, cerrar el calendario
+    if (rect.bottom < -40 || rect.top > window.innerHeight + 40) {
+      setOpen(false);
+      return;
+    }
+
+    const calendarHeight = 350;
+    const calendarWidth = 290;
     const spaceBelow = window.innerHeight - rect.bottom;
 
     let top = rect.bottom + 6;
@@ -83,10 +91,17 @@ export default function CustomDatePicker({
       top = Math.max(8, rect.top - calendarHeight - 6);
     }
 
+    // Coordenadas fijas relativas al Viewport (sin window.scrollY ni window.scrollX)
+    let left = rect.left;
+    if (left + calendarWidth > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - calendarWidth - 8);
+    }
+    if (left < 8) left = 8;
+
     setCoords({
-      top: top + window.scrollY,
-      left: Math.max(8, Math.min(rect.left + window.scrollX, window.innerWidth - 300)),
-      width: Math.max(280, rect.width),
+      top,
+      left,
+      width: calendarWidth,
     });
   }, []);
 

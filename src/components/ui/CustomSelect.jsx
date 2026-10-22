@@ -59,6 +59,13 @@ export default function CustomSelect({
     const el = triggerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+
+    // Si el elemento disparador queda fuera de la pantalla durante el scroll, cerrar el menú
+    if (rect.bottom < -40 || rect.top > window.innerHeight + 40) {
+      setOpen(false);
+      return;
+    }
+
     const dropdownHeight = Math.min(260, normalizedOptions.length * 40 + 16);
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
@@ -71,9 +78,10 @@ export default function CustomSelect({
       top = Math.max(8, rect.top - dropdownHeight - 6);
     }
 
+    // Coordenadas fijas relativas al Viewport (sin window.scrollY ni window.scrollX)
     setCoords({
-      top: top + window.scrollY,
-      left: rect.left + window.scrollX,
+      top,
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
       width: rect.width,
       placement,
     });
