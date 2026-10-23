@@ -16,9 +16,11 @@ import {
   AlertCircle,
   HelpCircle,
   Code,
+  FileCode2,
 } from 'lucide-react';
 import { cn } from '../../utils/format';
 import { useToast } from '../../context/ToastContext';
+import { useQA } from '../../context/QAContext';
 
 export const FORM_VALIDATION_SPECS = [
   {
@@ -204,6 +206,7 @@ export const FORM_VALIDATION_SPECS = [
 
 export default function ValidationRulesPanel({ onClose, onOpenCreateModal }) {
   const toast = useToast();
+  const { setGherkinOpen } = useQA();
   const [filterType, setFilterType] = useState('all'); // all, limits, security
   const [copiedId, setCopiedId] = useState(null);
 
@@ -424,20 +427,32 @@ export default function ValidationRulesPanel({ onClose, onOpenCreateModal }) {
       </div>
 
       {/* PIE DEL PANEL CON ACCIONES RÁPIDAS */}
-      <div className="border-t border-moss-200 bg-moss-50/50 p-3 flex items-center justify-between gap-2">
+      <div className="border-t border-moss-200 bg-moss-50/50 p-3 flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] text-moss-600 font-medium">
           ¿Listo para probar?
         </span>
-        {onOpenCreateModal && (
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={onOpenCreateModal}
-            data-testid="rules-panel-open-modal-btn"
-            className="btn btn-primary btn-sm !text-xs !py-1"
+            onClick={() => setGherkinOpen(true)}
+            data-testid="rules-panel-open-gherkin-btn"
+            className="btn btn-secondary btn-sm !text-xs !py-1 gap-1"
+            title="Abrir escenarios de prueba BDD / Gherkin"
           >
-            Abrir Formulario de Pruebas
+            <FileCode2 className="h-3.5 w-3.5 text-moss-600" />
+            <span>Escenarios Gherkin</span>
           </button>
-        )}
+          {onOpenCreateModal && (
+            <button
+              type="button"
+              onClick={onOpenCreateModal}
+              data-testid="rules-panel-open-modal-btn"
+              className="btn btn-primary btn-sm !text-xs !py-1"
+            >
+              Abrir Formulario
+            </button>
+          )}
+        </div>
       </div>
     </aside>
   );

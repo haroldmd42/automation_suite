@@ -12,7 +12,10 @@ function load() {
 }
 
 export function QAProvider({ children }) {
-  const [state, setState] = useState(load);
+  const [state, setState] = useState(() => ({
+    ...load(),
+    gherkinOpen: false,
+  }));
 
   useEffect(() => {
     try {
@@ -24,10 +27,12 @@ export function QAProvider({ children }) {
 
   const toggleLocators = useCallback(() => setState((s) => ({ ...s, showLocators: !s.showLocators })), []);
   const setInspector = useCallback((v) => setState((s) => ({ ...s, inspector: typeof v === 'function' ? v(s.inspector) : v })), []);
+  const toggleGherkin = useCallback(() => setState((s) => ({ ...s, gherkinOpen: !s.gherkinOpen })), []);
+  const setGherkinOpen = useCallback((v) => setState((s) => ({ ...s, gherkinOpen: typeof v === 'function' ? v(s.gherkinOpen) : !!v })), []);
 
   const value = useMemo(
-    () => ({ ...state, toggleLocators, setInspector }),
-    [state, toggleLocators, setInspector],
+    () => ({ ...state, toggleLocators, setInspector, toggleGherkin, setGherkinOpen }),
+    [state, toggleLocators, setInspector, toggleGherkin, setGherkinOpen],
   );
   return <QAContext.Provider value={value}>{children}</QAContext.Provider>;
 }

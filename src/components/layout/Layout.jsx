@@ -12,6 +12,7 @@ import {
   Zap,
   ChevronRight,
   RotateCcw,
+  FileCode2,
 } from 'lucide-react';
 import { MODULES } from '../../modules';
 import { useQA } from '../../context/QAContext';
@@ -22,6 +23,7 @@ import { cn } from '../../utils/format';
 import LocatorInspector from '../qa/LocatorInspector';
 import LocatorHint from '../qa/LocatorHint';
 import CustomSelect from '../ui/CustomSelect';
+import GherkinDrawer from '../qa/GherkinDrawer';
 
 function Brand() {
   return (
@@ -121,7 +123,7 @@ function Sidebar({ open, onClose }) {
 }
 
 function Topbar({ onMenu }) {
-  const { showLocators, toggleLocators, inspector, setInspector } = useQA();
+  const { showLocators, toggleLocators, inspector, setInspector, gherkinOpen, toggleGherkin } = useQA();
   const network = useNetworkConfig();
   const { itemCount } = useCart();
   const location = useLocation();
@@ -212,6 +214,17 @@ function Topbar({ onMenu }) {
             {inspector ? <MousePointerClick className="h-4 w-4" /> : <ScanSearch className="h-4 w-4" />}
             <span className="hidden xl:inline">Inspector</span>
           </button>
+          <button
+            type="button"
+            onClick={toggleGherkin}
+            aria-pressed={gherkinOpen}
+            data-testid="topbar-gherkin-btn"
+            title="Casos y escenarios de prueba en Gherkin (BDD)"
+            className={cn('btn btn-sm', gherkinOpen ? 'btn-primary' : 'btn-secondary')}
+          >
+            <FileCode2 className="h-4 w-4" />
+            <span className="hidden xl:inline">Escenarios Gherkin</span>
+          </button>
 
           <Link
             to="/ecommerce/cart"
@@ -238,6 +251,7 @@ function Topbar({ onMenu }) {
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { gherkinOpen, toggleGherkin } = useQA();
   const location = useLocation();
 
   useEffect(() => {
@@ -280,6 +294,23 @@ export default function Layout() {
         </footer>
       </div>
       <LocatorInspector />
+      <GherkinDrawer />
+
+      {/* BOTÓN FLOTANTE DISCRETO PARA ABRIR ESCENARIOS GHERKIN */}
+      {!gherkinOpen && (
+        <button
+          type="button"
+          onClick={toggleGherkin}
+          data-testid="floating-gherkin-btn"
+          aria-label="Abrir escenarios de prueba Gherkin"
+          className="fixed right-4 bottom-5 z-30 flex items-center gap-2 rounded-full border border-moss-300 bg-moss-900/90 px-3.5 py-2 text-xs font-bold text-white shadow-lift backdrop-blur hover:bg-moss-800 transition-all hover:scale-105 active:scale-95 group ring-2 ring-moss-500/20"
+          title="Ver escenarios de prueba BDD / Gherkin para este módulo"
+        >
+          <FileCode2 className="h-4 w-4 text-moss-400 group-hover:text-moss-300 transition-colors" />
+          <span className="hidden sm:inline">Escenarios Gherkin</span>
+          <span className="badge badge-moss !text-[9px] !py-0 !px-1 font-mono">BDD</span>
+        </button>
+      )}
     </div>
   );
 }

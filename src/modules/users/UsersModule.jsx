@@ -25,6 +25,7 @@ import {
   X,
   Sparkles,
   Pencil,
+  FileCode2,
 } from 'lucide-react';
 import { simulateRequest } from '../../services/network';
 import { formatDateES, cn } from '../../utils/format';
@@ -36,6 +37,7 @@ import CustomDatePicker from '../../components/ui/CustomDatePicker';
 import Modal from '../../components/ui/Modal';
 import LocatorHint from '../../components/qa/LocatorHint';
 import { useToast } from '../../context/ToastContext';
+import { useQA } from '../../context/QAContext';
 import ValidationRulesPanel from './ValidationRulesPanel';
 
 export const USER_ROLES = [
@@ -80,6 +82,7 @@ const INITIAL_FORM = {
 
 export default function UsersModule() {
   const toast = useToast();
+  const { setGherkinOpen } = useQA();
 
   // 1. Estado inicial: Listado de usuarios VACÍO según requerimiento
   const [users, setUsers] = useState([]);
@@ -389,7 +392,17 @@ export default function UsersModule() {
               <span>{showRulesPanel ? 'Ocultar Reglas QA' : 'Ver Reglas de Validación'}</span>
               <span className="badge badge-moss !text-[10px] !py-0 !px-1.5 ml-1">QA Lab</span>
             </button>
-            <LocatorHint testId="toggle-rules-panel-btn" label="Alternar Reglas de Validación" />
+            <button
+              type="button"
+              onClick={() => setGherkinOpen(true)}
+              data-testid="users-open-gherkin-btn"
+              className="btn btn-secondary btn-sm shadow-sm gap-1.5"
+              title="Ver escenarios de prueba en formato Gherkin (BDD) para este módulo"
+            >
+              <FileCode2 className="h-4 w-4 text-moss-600" />
+              <span>Escenarios Gherkin</span>
+            </button>
+            <LocatorHint testId="users-open-gherkin-btn" label="Ver Escenarios Gherkin" />
 
             {users.length > 0 && (
               <button
