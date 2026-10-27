@@ -289,7 +289,7 @@ export default function UsersModule() {
 
     setSubmitting(true);
     try {
-      await simulateRequest(() => {}, { minDelay: 350, maxDelay: 750, canFail: false });
+      await simulateRequest(() => { }, { minDelay: 350, maxDelay: 750, canFail: false });
 
       if (editingUser) {
         // ACTUALIZACIÓN DE USUARIO EXISTENTE
@@ -333,7 +333,7 @@ export default function UsersModule() {
 
         setUsers((prev) => [newUser, ...prev]);
         setCreateModalOpen(false);
-        toast.success(`Usuario ${newUser.fullName} (${newUser.id}) creado exitosamente`);
+        toast.success(`Usuario ${newUser.fullName} creado exitosamente`);
       }
     } catch {
       toast.error('Error al guardar datos del usuario');
@@ -433,292 +433,292 @@ export default function UsersModule() {
         {/* COLUMNA PRINCIPAL */}
         <div className="flex-1 min-w-0 w-full space-y-6">
 
-      {/* BARRA DE HERRAMIENTAS Y FILTROS */}
-      <section className="card p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-3">
-            {/* Buscador de usuarios */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-moss-400" />
-              <input
-                id="users-search-input"
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nombre, @username, correo o ID..."
-                data-testid="users-search-input"
-                className="input pl-10"
-              />
-            </div>
+          {/* BARRA DE HERRAMIENTAS Y FILTROS */}
+          <section className="card p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-3">
+                {/* Buscador de usuarios */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-moss-400" />
+                  <input
+                    id="users-search-input"
+                    type="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar por nombre, @username, correo o ID..."
+                    data-testid="users-search-input"
+                    className="input pl-10"
+                  />
+                </div>
 
-            {/* Filtro de rol con CustomSelect */}
-            <div className="w-full sm:w-64">
-              <CustomSelect
-                id="users-role-filter"
-                testId="users-role-filter"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                options={[
-                  { value: 'all', label: 'Todos los Roles' },
-                  ...USER_ROLES.map((r) => ({ value: r.value, label: r.label })),
-                ]}
-              />
-            </div>
-          </div>
+                {/* Filtro de rol con CustomSelect */}
+                <div className="w-full sm:w-64">
+                  <CustomSelect
+                    id="users-role-filter"
+                    testId="users-role-filter"
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    options={[
+                      { value: 'all', label: 'Todos los Roles' },
+                      ...USER_ROLES.map((r) => ({ value: r.value, label: r.label })),
+                    ]}
+                  />
+                </div>
+              </div>
 
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-moss-700">
-            {!showRulesPanel && (
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-moss-700">
+                {!showRulesPanel && (
+                  <button
+                    type="button"
+                    onClick={() => setShowRulesPanel(true)}
+                    data-testid="toolbar-show-rules-btn"
+                    className="btn btn-secondary btn-sm !text-xs !py-1 gap-1.5"
+                    title="Mostrar especificación de reglas de validación QA"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 text-moss-600" />
+                    <span>Ver Reglas QA</span>
+                  </button>
+                )}
+                <span
+                  data-testid="users-count-badge"
+                  className="rounded-xl bg-moss-100 px-3 py-1.5 border border-moss-200 text-moss-800"
+                >
+                  Total: <strong>{users.length}</strong> {users.length === 1 ? 'usuario' : 'usuarios'}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* LISTADO DE USUARIOS (ESTADO VACÍO O TABLA DE REGISTROS) */}
+          {users.length === 0 ? (
+            /* ESTADO VACÍO INICIAL */
+            <div
+              data-testid="users-empty-state"
+              className="card p-12 text-center flex flex-col items-center justify-center space-y-4 border-2 border-dashed border-moss-300 bg-white/60"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-moss-200/80 text-moss-700 shadow-soft ring-8 ring-moss-100">
+                <Users className="h-8 w-8" />
+              </div>
+              <div className="max-w-md space-y-1">
+                <h3 className="text-lg font-bold text-moss-900" data-testid="empty-state-title">
+                  No hay usuarios registrados
+                </h3>
+                <p className="text-sm text-moss-600 leading-relaxed" data-testid="empty-state-desc">
+                  El directorio de usuarios está actualmente vacío. Comienza creando el primer usuario
+                  con sus roles y credenciales para comprobar los datos creados en el detalle.
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowRulesPanel(true)}
-                data-testid="toolbar-show-rules-btn"
-                className="btn btn-secondary btn-sm !text-xs !py-1 gap-1.5"
-                title="Mostrar especificación de reglas de validación QA"
+                onClick={handleOpenCreateModal}
+                data-testid="create-first-user-btn"
+                className="btn btn-primary btn-lg shadow-lift mt-2"
               >
-                <BookOpen className="h-3.5 w-3.5 text-moss-600" />
-                <span>Ver Reglas QA</span>
+                <UserPlus className="h-4 w-4" /> Crear Primer Usuario
               </button>
-            )}
-            <span
-              data-testid="users-count-badge"
-              className="rounded-xl bg-moss-100 px-3 py-1.5 border border-moss-200 text-moss-800"
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            /* FILTRO SIN RESULTADOS */
+            <div
+              data-testid="users-no-results"
+              className="card p-8 text-center space-y-3 border-moss-200"
             >
-              Total: <strong>{users.length}</strong> {users.length === 1 ? 'usuario' : 'usuarios'}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* LISTADO DE USUARIOS (ESTADO VACÍO O TABLA DE REGISTROS) */}
-      {users.length === 0 ? (
-        /* ESTADO VACÍO INICIAL */
-        <div
-          data-testid="users-empty-state"
-          className="card p-12 text-center flex flex-col items-center justify-center space-y-4 border-2 border-dashed border-moss-300 bg-white/60"
-        >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-moss-200/80 text-moss-700 shadow-soft ring-8 ring-moss-100">
-            <Users className="h-8 w-8" />
-          </div>
-          <div className="max-w-md space-y-1">
-            <h3 className="text-lg font-bold text-moss-900" data-testid="empty-state-title">
-              No hay usuarios registrados
-            </h3>
-            <p className="text-sm text-moss-600 leading-relaxed" data-testid="empty-state-desc">
-              El directorio de usuarios está actualmente vacío. Comienza creando el primer usuario
-              con sus roles y credenciales para comprobar los datos creados en el detalle.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleOpenCreateModal}
-            data-testid="create-first-user-btn"
-            className="btn btn-primary btn-lg shadow-lift mt-2"
-          >
-            <UserPlus className="h-4 w-4" /> Crear Primer Usuario
-          </button>
-        </div>
-      ) : filteredUsers.length === 0 ? (
-        /* FILTRO SIN RESULTADOS */
-        <div
-          data-testid="users-no-results"
-          className="card p-8 text-center space-y-3 border-moss-200"
-        >
-          <p className="text-sm font-semibold text-moss-800">
-            No se encontraron usuarios que coincidan con los filtros aplicados.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchTerm('');
-              setRoleFilter('all');
-            }}
-            data-testid="clear-filters-btn"
-            className="btn btn-secondary btn-sm"
-          >
-            Limpiar Filtros
-          </button>
-        </div>
-      ) : (
-        /* TABLA DE USUARIOS CREADOS */
-        <section
-          className="card overflow-hidden"
-          data-testid="users-table-container"
-        >
-          <div className="w-full">
-            <table className="w-full table-fixed text-left text-xs text-moss-800">
-              <colgroup>
-                <col className="w-[26%]" />
-                <col className="w-[13%]" />
-                <col className="w-[16%]" />
-                <col className="w-[18%]" />
-                <col className="w-[10%]" />
-                <col className="w-[6%]" />
-                <col className="w-[11%]" />
-              </colgroup>
-              <thead className="border-b border-moss-200 bg-moss-50/80 text-[11px] font-bold uppercase tracking-wider text-moss-700">
-                <tr>
-                  <th scope="col" className="px-3.5 py-3 text-left">Usuario</th>
-                  <th scope="col" className="px-2.5 py-3 text-left">Rol Asignado</th>
-                  <th scope="col" className="px-2.5 py-3 text-left">Departamento</th>
-                  <th scope="col" className="px-2.5 py-3 text-left">Contacto</th>
-                  <th scope="col" className="px-2 py-3 text-left">Fecha Ingreso</th>
-                  <th scope="col" className="px-2 py-3 text-left">Estado</th>
-                  <th scope="col" className="px-3.5 py-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-moss-100">
-                {filteredUsers.map((user) => {
-                  const roleObj = USER_ROLES.find((r) => r.value === user.role) || {
-                    label: user.role,
-                    badge: user.role,
-                    color: 'badge-moss',
-                  };
-                  const deptObj = DEPARTMENTS.find((d) => d.value === user.department);
-                  const initials = user.fullName
-                    .split(' ')
-                    .slice(0, 2)
-                    .map((w) => w[0]?.toUpperCase())
-                    .join('');
-
-                  return (
-                    <tr
-                      key={user.id}
-                      data-testid={`user-row-${user.id}`}
-                      onClick={() => setSelectedUser(user)}
-                      className="cursor-pointer hover:bg-moss-50/70 transition-colors group"
-                    >
-                      {/* Usuario */}
-                      <td className="px-3.5 py-3 align-top">
-                        <div className="flex items-start gap-2.5 min-w-0">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-1 ring-moss-200 mt-0.5">
-                            {initials}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div
-                              className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm break-words leading-tight"
-                              data-testid={`user-name-${user.id}`}
-                            >
-                              <span>{user.fullName}</span>
-                              {user.updatedAt && (
-                                <span
-                                  data-testid={`user-updated-badge-${user.id}`}
-                                  className="badge badge-moss text-[9px] py-0 px-1 font-mono font-normal ml-1.5 align-middle inline-flex"
-                                  title={`Modificado: ${user.updatedAt}`}
-                                >
-                                  editado
-                                </span>
-                              )}
-                            </div>
-                            <p
-                              className="font-mono text-[11px] text-moss-500 break-words mt-0.5"
-                              data-testid={`user-username-${user.id}`}
-                            >
-                              @{user.username} · <span className="font-semibold text-moss-600">{user.id}</span>
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Rol */}
-                      <td className="px-2.5 py-3 align-top">
-                        <span
-                          className={cn('badge text-[11px] font-semibold inline-flex items-center gap-1 max-w-full', roleObj.color)}
-                          data-testid={`user-role-${user.id}`}
-                          title={roleObj.label}
-                        >
-                          <Shield className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{roleObj.badge || roleObj.label}</span>
-                        </span>
-                      </td>
-
-                      {/* Departamento */}
-                      <td className="px-2.5 py-3 align-top text-xs font-medium text-moss-800 leading-snug">
-                        <span className="break-words line-clamp-2" title={deptObj?.label || user.department}>
-                          {deptObj?.label || user.department}
-                        </span>
-                      </td>
-
-                      {/* Contacto */}
-                      <td className="px-2.5 py-3 align-top">
-                        <div className="space-y-0.5 min-w-0">
-                          <p className="flex items-center gap-1.5 font-medium text-moss-900 text-xs min-w-0" title={user.email}>
-                            <Mail className="h-3 w-3 text-moss-500 shrink-0" />
-                            <span data-testid={`user-email-${user.id}`} className="break-all leading-tight">{user.email}</span>
-                          </p>
-                          <p className="flex items-center gap-1.5 font-mono text-[11px] text-moss-500">
-                            <Phone className="h-3 w-3 text-moss-400 shrink-0" />
-                            <span data-testid={`user-phone-${user.id}`}>{user.phone}</span>
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Fecha Ingreso */}
-                      <td className="px-2 py-3 align-top font-mono text-xs text-moss-700 whitespace-nowrap" data-testid={`user-hire-date-${user.id}`}>
-                        {user.hireDate}
-                      </td>
-
-                      {/* Estado */}
-                      <td className="px-2 py-3 align-top">
-                        <span
-                          data-testid={`user-status-${user.id}`}
-                          className={cn(
-                            'badge text-[11px] whitespace-nowrap',
-                            user.status === 'active' && 'badge-green',
-                            user.status === 'pending' && 'badge-yellow',
-                            user.status === 'suspended' && 'badge-red',
-                          )}
-                        >
-                          {user.status === 'active' && 'Activo'}
-                          {user.status === 'pending' && 'Pendiente'}
-                          {user.status === 'suspended' && 'Suspendido'}
-                        </span>
-                      </td>
-
-                      {/* Acciones */}
-                      <td className="px-3.5 py-3 align-top text-right whitespace-nowrap">
-                        <div
-                          className="flex items-center justify-end gap-1.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setSelectedUser(user)}
-                            data-testid={`user-view-btn-${user.id}`}
-                            className="btn btn-secondary !px-2.5 !py-1 text-xs"
-                            title="Ver detalles completos del usuario"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                            <span>Detalle</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditModal(user)}
-                            data-testid={`user-edit-btn-${user.id}`}
-                            className="btn btn-secondary !px-2.5 !py-1 text-xs"
-                            title="Editar datos del usuario"
-                          >
-                            <Pencil className="h-3.5 w-3.5 shrink-0 text-moss-600" />
-                            <span>Editar</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirmUser(user)}
-                            data-testid={`user-delete-btn-${user.id}`}
-                            className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg shrink-0"
-                            title="Eliminar usuario"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
+              <p className="text-sm font-semibold text-moss-800">
+                No se encontraron usuarios que coincidan con los filtros aplicados.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setRoleFilter('all');
+                }}
+                data-testid="clear-filters-btn"
+                className="btn btn-secondary btn-sm"
+              >
+                Limpiar Filtros
+              </button>
+            </div>
+          ) : (
+            /* TABLA DE USUARIOS CREADOS */
+            <section
+              className="card overflow-hidden"
+              data-testid="users-table-container"
+            >
+              <div className="w-full">
+                <table className="w-full table-fixed text-left text-xs text-moss-800">
+                  <colgroup>
+                    <col className="w-[26%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[16%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[6%]" />
+                    <col className="w-[11%]" />
+                  </colgroup>
+                  <thead className="border-b border-moss-200 bg-moss-50/80 text-[11px] font-bold uppercase tracking-wider text-moss-700">
+                    <tr>
+                      <th scope="col" className="px-3.5 py-3 text-left">Usuario</th>
+                      <th scope="col" className="px-2.5 py-3 text-left">Rol Asignado</th>
+                      <th scope="col" className="px-2.5 py-3 text-left">Departamento</th>
+                      <th scope="col" className="px-2.5 py-3 text-left">Contacto</th>
+                      <th scope="col" className="px-2 py-3 text-left">Fecha Ingreso</th>
+                      <th scope="col" className="px-2 py-3 text-left">Estado</th>
+                      <th scope="col" className="px-3.5 py-3 text-right">Acciones</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                  </thead>
+                  <tbody className="divide-y divide-moss-100">
+                    {filteredUsers.map((user) => {
+                      const roleObj = USER_ROLES.find((r) => r.value === user.role) || {
+                        label: user.role,
+                        badge: user.role,
+                        color: 'badge-moss',
+                      };
+                      const deptObj = DEPARTMENTS.find((d) => d.value === user.department);
+                      const initials = user.fullName
+                        .split(' ')
+                        .slice(0, 2)
+                        .map((w) => w[0]?.toUpperCase())
+                        .join('');
+
+                      return (
+                        <tr
+                          key={user.id}
+                          data-testid={`user-row-${user.id}`}
+                          onClick={() => setSelectedUser(user)}
+                          className="cursor-pointer hover:bg-moss-50/70 transition-colors group"
+                        >
+                          {/* Usuario */}
+                          <td className="px-3.5 py-3 align-top">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-moss-600 to-moss-800 font-display font-bold text-white text-xs shadow-soft ring-1 ring-moss-200 mt-0.5">
+                                {initials}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div
+                                  className="font-bold text-moss-900 group-hover:text-moss-700 transition-colors text-xs sm:text-sm break-words leading-tight"
+                                  data-testid={`user-name-${user.id}`}
+                                >
+                                  <span>{user.fullName}</span>
+                                  {user.updatedAt && (
+                                    <span
+                                      data-testid={`user-updated-badge-${user.id}`}
+                                      className="badge badge-moss text-[9px] py-0 px-1 font-mono font-normal ml-1.5 align-middle inline-flex"
+                                      title={`Modificado: ${user.updatedAt}`}
+                                    >
+                                      editado
+                                    </span>
+                                  )}
+                                </div>
+                                <p
+                                  className="font-mono text-[11px] text-moss-500 break-words mt-0.5"
+                                  data-testid={`user-username-${user.id}`}
+                                >
+                                  @{user.username} · <span className="font-semibold text-moss-600">{user.id}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Rol */}
+                          <td className="px-2.5 py-3 align-top">
+                            <span
+                              className={cn('badge text-[11px] font-semibold inline-flex items-center gap-1 max-w-full', roleObj.color)}
+                              data-testid={`user-role-${user.id}`}
+                              title={roleObj.label}
+                            >
+                              <Shield className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{roleObj.badge || roleObj.label}</span>
+                            </span>
+                          </td>
+
+                          {/* Departamento */}
+                          <td className="px-2.5 py-3 align-top text-xs font-medium text-moss-800 leading-snug">
+                            <span className="break-words line-clamp-2" title={deptObj?.label || user.department}>
+                              {deptObj?.label || user.department}
+                            </span>
+                          </td>
+
+                          {/* Contacto */}
+                          <td className="px-2.5 py-3 align-top">
+                            <div className="space-y-0.5 min-w-0">
+                              <p className="flex items-center gap-1.5 font-medium text-moss-900 text-xs min-w-0" title={user.email}>
+                                <Mail className="h-3 w-3 text-moss-500 shrink-0" />
+                                <span data-testid={`user-email-${user.id}`} className="break-all leading-tight">{user.email}</span>
+                              </p>
+                              <p className="flex items-center gap-1.5 font-mono text-[11px] text-moss-500">
+                                <Phone className="h-3 w-3 text-moss-400 shrink-0" />
+                                <span data-testid={`user-phone-${user.id}`}>{user.phone}</span>
+                              </p>
+                            </div>
+                          </td>
+
+                          {/* Fecha Ingreso */}
+                          <td className="px-2 py-3 align-top font-mono text-xs text-moss-700 whitespace-nowrap" data-testid={`user-hire-date-${user.id}`}>
+                            {user.hireDate}
+                          </td>
+
+                          {/* Estado */}
+                          <td className="px-2 py-3 align-top">
+                            <span
+                              data-testid={`user-status-${user.id}`}
+                              className={cn(
+                                'badge text-[11px] whitespace-nowrap',
+                                user.status === 'active' && 'badge-green',
+                                user.status === 'pending' && 'badge-yellow',
+                                user.status === 'suspended' && 'badge-red',
+                              )}
+                            >
+                              {user.status === 'active' && 'Activo'}
+                              {user.status === 'pending' && 'Pendiente'}
+                              {user.status === 'suspended' && 'Suspendido'}
+                            </span>
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="px-3.5 py-3 align-top text-right whitespace-nowrap">
+                            <div
+                              className="flex items-center justify-end gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setSelectedUser(user)}
+                                data-testid={`user-view-btn-${user.id}`}
+                                className="btn btn-secondary !px-2.5 !py-1 text-xs"
+                                title="Ver detalles completos del usuario"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                                <span>Detalle</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditModal(user)}
+                                data-testid={`user-edit-btn-${user.id}`}
+                                className="btn btn-secondary !px-2.5 !py-1 text-xs"
+                                title="Editar datos del usuario"
+                              >
+                                <Pencil className="h-3.5 w-3.5 shrink-0 text-moss-600" />
+                                <span>Editar</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmUser(user)}
+                                data-testid={`user-delete-btn-${user.id}`}
+                                className="btn btn-ghost !h-7 !w-7 !p-0 text-moss-400 hover:text-danger-600 rounded-lg shrink-0"
+                                title="Eliminar usuario"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
 
         {/* COLUMNA DERECHA: PANEL DE REGLAS DE VALIDACIÓN QA (CORRESPONDE AL RECUADRO ROJO) */}
@@ -855,8 +855,8 @@ export default function UsersModule() {
                       formData.fullName.trim().length > 45
                         ? 'bg-danger-100 text-danger-700 font-bold'
                         : formData.fullName.trim().length >= 40
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-moss-100/70 text-moss-600',
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-moss-100/70 text-moss-600',
                     )}
                   >
                     {formData.fullName.length}/45
@@ -962,8 +962,8 @@ export default function UsersModule() {
                       onlyDigits(formData.phone).length > 10
                         ? 'bg-danger-100 text-danger-700 font-bold'
                         : onlyDigits(formData.phone).length === 10
-                        ? 'bg-green-100 text-green-700 font-bold'
-                        : 'bg-moss-100/70 text-moss-600',
+                          ? 'bg-green-100 text-green-700 font-bold'
+                          : 'bg-moss-100/70 text-moss-600',
                     )}
                   >
                     {onlyDigits(formData.phone).length}/10
@@ -1126,7 +1126,7 @@ export default function UsersModule() {
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         data-testid={`perm-checkbox-${p.id}`}
                         className="checkbox mt-0.5"
                       />
