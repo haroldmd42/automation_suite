@@ -133,10 +133,32 @@
   }
 
   /* Tables */
-  .table-th {
-    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-moss-700;
+  .table-container {
+    @apply w-full overflow-x-auto rounded-2xl border border-moss-200/90 bg-white shadow-soft;
+    box-shadow: 0 4px 20px -2px rgba(40, 54, 24, 0.06);
   }
-  .table-td { @apply whitespace-nowrap px-4 py-3 text-sm text-moss-900; }
+  .table {
+    @apply w-full text-left text-xs text-moss-800 border-collapse;
+  }
+  .table thead {
+    @apply border-b border-moss-200/90 bg-moss-100/70 text-[11px] font-bold uppercase tracking-wider text-moss-700;
+  }
+  .table th {
+    @apply px-5 py-4 text-left font-bold text-moss-800 whitespace-nowrap;
+  }
+  .table tbody {
+    @apply divide-y divide-moss-100 bg-white;
+  }
+  .table tbody tr {
+    @apply transition-colors duration-150 hover:bg-moss-50/60;
+  }
+  .table td {
+    @apply px-5 py-4 align-middle text-xs leading-relaxed;
+  }
+  .table-th {
+    @apply whitespace-nowrap px-5 py-4 text-left text-xs font-bold uppercase tracking-wider text-moss-700;
+  }
+  .table-td { @apply whitespace-nowrap px-5 py-4 text-sm text-moss-900; }
 
   .kbd {
     @apply rounded-md border border-moss-300 bg-moss-50 px-1.5 py-0.5 font-mono text-[11px] text-moss-700 shadow-sm;

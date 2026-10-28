@@ -32,6 +32,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://uhlxutrepaoaauipainz.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_XebZONLtJJfbkFRIgIoTXw_oI7Q3PN4' }}
         run: npm run build
 
       - name: Add .nojekyll

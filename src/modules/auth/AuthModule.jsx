@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Activity,
   Clock,
+  Database,
   Fingerprint,
   History,
   Lock,
   LogOut,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   TriangleAlert,
   Unlock,
   Users,
@@ -260,7 +262,7 @@ export default function AuthModule() {
         icon={Lock}
         eyebrow="Módulo 01"
         title="Autenticación y manejo de estados"
-        description={`Bloqueo tras ${api.MAX_ATTEMPTS} intentos fallidos durante ${api.LOCK_SECONDS} s (persistente al recargar), MFA, contraseña caducada, sesión de ${api.SESSION_SECONDS} s con advertencia y errores 503 transitorios.`}
+        description={`Simulador avanzado para pruebas QA: bloqueo tras ${api.MAX_ATTEMPTS} intentos fallidos durante ${api.LOCK_SECONDS} s (persistente al recargar), MFA, contraseña caducada, sesión de ${api.SESSION_SECONDS} s con advertencia y errores 503 transitorios.`}
         testId="auth-header"
         actions={
           <span className="badge bg-white/10 text-moss-100 ring-1 ring-white/15" data-testid="auth-current-view">

@@ -1,6 +1,97 @@
-import { LayoutDashboard, Lock, ShoppingCart, SlidersHorizontal, Timer, Table2, Users } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Lock,
+  ShoppingCart,
+  SlidersHorizontal,
+  Timer,
+  Table2,
+  Users,
+  Database,
+  ShieldCheck,
+  KeyRound,
+  CheckSquare,
+  GitBranch,
+  Cpu,
+  Headphones,
+  FileText,
+} from 'lucide-react';
 
-/** Metadatos de módulos: usados por el sidebar, el dashboard y el breadcrumb. */
+/** Módulos exclusivos para usuarios autenticados en el Portal Cloud organizados por Rol */
+export const PORTAL_MODULES = [
+  {
+    key: 'portal-users',
+    path: '/portal/users',
+    label: 'Gestión de Usuarios',
+    icon: Users,
+    roles: ['admin'],
+    testId: 'portal-nav-users',
+    badge: 'Admin',
+  },
+  {
+    key: 'portal-qa-plans',
+    path: '/portal/qa-plans',
+    label: 'Suites & Planes de Prueba',
+    icon: CheckSquare,
+    roles: ['admin', 'qa_lead'],
+    testId: 'portal-nav-qa-plans',
+    badge: 'QA Lead',
+  },
+  {
+    key: 'portal-dev-releases',
+    path: '/portal/dev-releases',
+    label: 'Releases & Feature Flags',
+    icon: GitBranch,
+    roles: ['admin', 'developer'],
+    testId: 'portal-nav-dev-releases',
+    badge: 'Dev Senior',
+  },
+  {
+    key: 'portal-devops-pipelines',
+    path: '/portal/devops-pipelines',
+    label: 'Pipelines CI/CD & Clúster',
+    icon: Cpu,
+    roles: ['admin', 'devops'],
+    testId: 'portal-nav-devops-pipelines',
+    badge: 'DevOps',
+  },
+  {
+    key: 'portal-security-compliance',
+    path: '/portal/security-compliance',
+    label: 'Seguridad & Cumplimiento',
+    icon: ShieldCheck,
+    roles: ['admin', 'auditor'],
+    testId: 'portal-nav-security-compliance',
+    badge: 'Auditor',
+  },
+  {
+    key: 'portal-support-tickets',
+    path: '/portal/support-tickets',
+    label: 'Mesa de Ayuda & Tickets L2',
+    icon: Headphones,
+    roles: ['admin', 'support'],
+    testId: 'portal-nav-support-tickets',
+    badge: 'Soporte L2',
+  },
+  {
+    key: 'portal-audit',
+    path: '/portal/audit',
+    label: 'Auditoría y Registros',
+    icon: FileText,
+    roles: ['admin', 'auditor'],
+    testId: 'portal-nav-audit',
+    badge: 'Logs',
+  },
+  {
+    key: 'portal-profile',
+    path: '/portal/profile',
+    label: 'Mi Perfil y Credenciales',
+    icon: KeyRound,
+    roles: ['*'],
+    testId: 'portal-nav-profile',
+  },
+];
+
+/** Metadatos de módulos de la Suite de Pruebas QA (Modo público/práctica) */
 export const MODULES = [
   {
     key: 'dashboard',
