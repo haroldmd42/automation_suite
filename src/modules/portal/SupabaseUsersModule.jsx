@@ -47,6 +47,7 @@ import LocatorHint from '../../components/qa/LocatorHint';
 export const USER_ROLES = [
   { value: 'admin', label: 'Administrador del Sistema', badge: 'Admin', color: 'badge-red', desc: 'Acceso total y configuración de seguridad' },
   { value: 'qa_lead', label: 'Líder de Calidad (QA Lead)', badge: 'QA Lead', color: 'badge-green', desc: 'Ejecución y aprobación de suites de pruebas' },
+  { value: 'qa_analyst', label: 'Analista de Calidad', badge: 'Analista QA', color: 'badge-green', desc: 'Creación y ejecución de sets de pruebas automatizadas' },
   { value: 'developer', label: 'Desarrollador Senior', badge: 'Dev Senior', color: 'badge-blue', desc: 'Implementación de módulos y arquitectura' },
   { value: 'devops', label: 'Ingeniero Cloud / DevOps', badge: 'DevOps', color: 'badge-yellow', desc: 'Gestión de infraestructura y pipelines' },
   { value: 'auditor', label: 'Auditor de Seguridad', badge: 'Auditor', color: 'badge-gray', desc: 'Monitoreo y lectura de eventos del sistema' },
@@ -121,7 +122,16 @@ export default function SupabaseUsersModule() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      const normalized = (data || []).map((u) => {
+        const perms = Array.isArray(u.permissions) ? u.permissions : [];
+        const hasAnalystTag = perms.includes('role:qa_analyst');
+        return {
+          ...u,
+          role: hasAnalystTag ? 'qa_analyst' : u.role,
+          permissions: perms.filter((p) => !String(p).startsWith('role:')),
+        };
+      });
+      setUsers(normalized);
     } catch (err) {
       console.error('Error cargando perfiles:', err);
       toast.error('Error al cargar usuarios', err.message);
@@ -347,6 +357,10 @@ export default function SupabaseUsersModule() {
 
     setSubmitting(true);
     try {
+      const cleanPermissions = (formData.permissions || []).filter((p) => !String(p).startsWith('role:'));
+      const permsWithRoleTag =
+        formData.role === 'qa_analyst' ? [...cleanPermissions, 'role:qa_analyst'] : cleanPermissions;
+
       if (editingUser) {
         // MODO EDICIÓN
         const updatePayload = {
@@ -357,14 +371,22 @@ export default function SupabaseUsersModule() {
           phone: onlyDigits(formData.phone),
           hire_date: formData.hireDate,
           status: formData.status,
-          permissions: formData.permissions,
+          permissions: permsWithRoleTag,
           updated_at: new Date().toISOString(),
         };
 
-        const { error: updateErr } = await supabase
+        let { error: updateErr } = await supabase
           .from('profiles')
           .update(updatePayload)
           .eq('id', editingUser.id);
+
+        if (updateErr && formData.role === 'qa_analyst') {
+          const retry = await supabase
+            .from('profiles')
+            .update({ ...updatePayload, role: 'qa_lead' })
+            .eq('id', editingUser.id);
+          updateErr = retry.error;
+        }
 
         if (updateErr) throw updateErr;
 
@@ -380,28 +402,46 @@ export default function SupabaseUsersModule() {
         // Se usa un cliente efímero e independiente sin almacenamiento para evitar
         // que Supabase sustituya la sesión activa del Administrador por la del nuevo usuario
         const authClient = createIsolatedSupabaseClient() || supabase;
-        const { data: authData, error: authErr } = await authClient.auth.signUp({
+        const baseMeta = {
+          full_name: formData.fullName.trim(),
+          username: formData.username.trim(),
+          role: formData.role,
+          custom_role: formData.role,
+          department: formData.department,
+          phone: onlyDigits(formData.phone),
+          hire_date: formData.hireDate,
+          status: formData.status,
+          permissions: permsWithRoleTag,
+        };
+
+        let { data: authData, error: authErr } = await authClient.auth.signUp({
           email: formData.email.trim(),
           password: formData.password,
-          options: {
-            data: {
-              full_name: formData.fullName.trim(),
-              username: formData.username.trim(),
-              role: formData.role,
-              department: formData.department,
-              phone: onlyDigits(formData.phone),
-              hire_date: formData.hireDate,
-              status: formData.status,
-              permissions: formData.permissions,
-            },
-          },
+          options: { data: baseMeta },
         });
+
+        // Si la tabla remota tiene un CHECK constraint heredado en profiles.role, respaldar con qa_lead + etiqueta de rol
+        if (authErr && formData.role === 'qa_analyst') {
+          const retrySignUp = await authClient.auth.signUp({
+            email: formData.email.trim(),
+            password: formData.password,
+            options: {
+              data: {
+                ...baseMeta,
+                role: 'qa_lead',
+                custom_role: 'qa_analyst',
+              },
+            },
+          });
+          authData = retrySignUp.data;
+          authErr = retrySignUp.error;
+        }
 
         if (authErr) throw authErr;
 
         // Si se generó el usuario, asegurar campos en tabla profiles
         if (authData?.user?.id) {
-          await supabase.from('profiles').upsert({
+          const profilePayload = {
             id: authData.user.id,
             email: formData.email.trim(),
             full_name: formData.fullName.trim(),
@@ -411,9 +451,13 @@ export default function SupabaseUsersModule() {
             phone: onlyDigits(formData.phone),
             hire_date: formData.hireDate,
             status: formData.status,
-            permissions: formData.permissions,
+            permissions: permsWithRoleTag,
             updated_at: new Date().toISOString(),
-          });
+          };
+          const { error: upsertErr } = await supabase.from('profiles').upsert(profilePayload);
+          if (upsertErr && formData.role === 'qa_analyst') {
+            await supabase.from('profiles').upsert({ ...profilePayload, role: 'qa_lead' });
+          }
         }
 
         await logAudit('create_user', 'profiles', {

@@ -128,10 +128,6 @@ export default function SecurityComplianceModule() {
         badge={<span className="badge badge-gray">Auditor</span>}
       >
         <div className="flex items-center gap-2">
-          <Link to="/portal/audit" className="btn btn-secondary gap-2" data-testid="view-audit-logs-btn">
-            <FileText className="h-4 w-4" />
-            <span>Ver Logs de Auditoría</span>
-          </Link>
           <button
             type="button"
             onClick={() => setCreateCertModal(true)}

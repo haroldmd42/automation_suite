@@ -15,3 +15,4 @@ test-results
 playwright-report
 cypress/videos
 cypress/screenshots
+.ci-workspaces

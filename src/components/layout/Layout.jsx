@@ -47,15 +47,16 @@ function Brand() {
 
 function Sidebar({ open, onClose }) {
   const { user, profile, signOut, logAudit } = useSupabaseAuth();
-  const isAdmin = profile?.role === 'admin';
-  const [rolePreview, setRolePreview] = useState('all');
+  const userRole = profile?.role || user?.user_metadata?.role || 'qa_lead';
+  const isAdmin = userRole === 'admin';
+  const homeRoute = getRoleHomeRoute(userRole);
   const navigate = useNavigate();
   const toast = useToast();
 
   const handleLogout = async () => {
     try {
       if (logAudit && user) {
-        await logAudit('logout', 'auth.users', { email: user.email, role: profile?.role });
+        await logAudit('logout', 'auth.users', { email: user.email, role: userRole });
       }
       await signOut();
       toast.info('Sesión cerrada', 'Has salido del portal.');
@@ -87,7 +88,7 @@ function Sidebar({ open, onClose }) {
         <div className="pointer-events-none absolute inset-0 bg-grid opacity-40" />
         <div className="relative flex items-center justify-between">
           {user ? (
-            <Link to="/portal/users" className="flex items-center gap-3 px-2" data-testid="portal-brand-link">
+            <Link to={homeRoute} className="flex items-center gap-3 px-2" data-testid="portal-brand-link">
               <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-moss-400 to-moss-600 shadow-lift ring-1 ring-white/20">
                 <Database className="h-5 w-5 text-white" aria-hidden />
               </div>
@@ -116,52 +117,14 @@ function Sidebar({ open, onClose }) {
         <nav className="relative mt-8 flex-1 space-y-1 overflow-y-auto" aria-label="Navegación principal">
           {user ? (
             <>
-              {isAdmin ? (
-                <div className="mb-3 px-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-moss-400">
-                      Filtrar Vista por Rol
-                    </p>
-                    <span className="badge badge-moss !text-[9px] !py-0 !px-1 font-mono">RBAC</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      { key: 'all', label: 'Todos' },
-                      { key: 'admin', label: 'Admin' },
-                      { key: 'qa_lead', label: 'QA Lead' },
-                      { key: 'developer', label: 'Dev' },
-                      { key: 'devops', label: 'DevOps' },
-                      { key: 'auditor', label: 'Auditor' },
-                      { key: 'support', label: 'Soporte' },
-                    ].map((r) => (
-                      <button
-                        key={r.key}
-                        type="button"
-                        onClick={() => setRolePreview(r.key)}
-                        data-testid={`filter-role-${r.key}-btn`}
-                        className={cn(
-                          'rounded px-1.5 py-0.5 text-[10px] font-semibold transition',
-                          rolePreview === r.key
-                            ? 'bg-moss-500 text-white font-bold shadow-soft'
-                            : 'bg-white/5 text-moss-300 hover:bg-white/10 hover:text-white'
-                        )}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-moss-400">
-                  Módulos de {profile?.role?.toUpperCase() || 'USUARIO'}
+              <div className="mb-2 flex items-center justify-between px-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-moss-400">
+                  Módulos de {userRole.toUpperCase()}
                 </p>
-              )}
+                <span className="badge badge-moss !text-[9px] !py-0 !px-1 font-mono">RBAC</span>
+              </div>
 
-              {PORTAL_MODULES.filter((m) => {
-                if (isAdmin && rolePreview === 'all') return true;
-                const effectiveRole = isAdmin && rolePreview !== 'all' ? rolePreview : (profile?.role || 'admin');
-                return m.roles.includes('*') || m.roles.includes(effectiveRole);
-              }).map((m) => {
+              {PORTAL_MODULES.filter((m) => m.roles.includes('*') || m.roles.includes(userRole)).map((m) => {
                 const Icon = m.icon;
                 return (
                   <NavLink
@@ -306,6 +269,8 @@ export function getRoleHomeRoute(role) {
   switch (role) {
     case 'qa_lead':
       return '/portal/qa-plans';
+    case 'qa_analyst':
+      return '/portal/qa-automation-sets';
     case 'developer':
       return '/portal/dev-releases';
     case 'devops':
@@ -325,6 +290,9 @@ const ROUTE_LABELS = {
   '/portal': 'Gestión de Usuarios (Admin)',
   '/portal/users': 'Gestión de Usuarios (Admin)',
   '/portal/qa-plans': 'Suites & Planes de Prueba (QA Lead)',
+  '/portal/qa-automation-sets': 'Sets de Pruebas Automatizadas (Analista de Calidad)',
+  '/portal/qa-test-cases': 'Matriz de Casos de Prueba (Analista de Calidad)',
+  '/portal/qa-test-execution': 'Ejecución de Pruebas (Analista de Calidad)',
   '/portal/dev-releases': 'Releases & Feature Flags (Dev Senior)',
   '/portal/devops-pipelines': 'Pipelines CI/CD & Clúster (DevOps)',
   '/portal/security-compliance': 'Seguridad & Cumplimiento (Auditor)',

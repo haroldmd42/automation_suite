@@ -517,6 +517,113 @@ export const GHERKIN_FEATURES = {
       },
     ],
   },
+  upload: {
+    key: 'upload',
+    path: '/upload',
+    moduleLabel: 'Carga de Archivos y Validaciones QA',
+    featureTitle: 'Zonas de Carga Especializadas y Validaciones en Campo',
+    fileName: 'carga_archivos.feature',
+    description: `Como ingeniero de automatización de calidad (QA)
+  Quiero interactuar con las 4 zonas de carga especializadas
+  Para validar reglas de formato, tamaño y nomenclatura con errores mostrados bajo el campo y registro de procesados`,
+    tags: ['@suite', '@upload', '@archivos', '@zonas'],
+    scenarios: [
+      {
+        id: 'upload-01',
+        title: 'Carga y procesamiento exitoso de documento PDF en Zona 01',
+        tags: ['@smoke', '@happy-path', '@zona-pdf'],
+        type: 'Scenario',
+        description: 'Validar que un archivo PDF válido sea procesado y aparezca en la tabla de archivos procesados.',
+        steps: [
+          { keyword: 'Given', text: 'que el usuario navega al módulo "Carga de Archivos" en "/upload"' },
+          { keyword: 'When', text: 'adjunta un archivo "manual_calidad.pdf" de 150 KB en [data-testid="upload-zone-pdf-input"]' },
+          { keyword: 'Then', text: 'no debe mostrarse ningún mensaje de error en [data-testid="upload-zone-pdf-error"]' },
+          { keyword: 'And', text: 'la tabla de procesados [data-testid="uploaded-files-table"] muestra el archivo con estado "Procesado Exitosamente"' },
+          { keyword: 'And', text: 'el log de eventos registra el alta con data-tone="success"' },
+        ],
+        involvedLocators: [
+          'upload-zone-pdf-input',
+          'upload-zone-pdf-dropzone',
+          'upload-zone-pdf-error',
+          'uploaded-files-table',
+          'upload-event-log',
+        ],
+      },
+      {
+        id: 'upload-02',
+        title: 'Error bajo el campo en Zona 01 al intentar subir formato no permitido (.jpg en zona PDF)',
+        tags: ['@negativo', '@formato-invalido', '@error-bajo-campo'],
+        type: 'Scenario',
+        description: 'Verificar que el mensaje de error se renderice directamente debajo de la zona de carga.',
+        steps: [
+          { keyword: 'Given', text: 'que el usuario está en la Zona 01 de Documentos PDF' },
+          { keyword: 'When', text: 'intenta cargar una imagen "captura.jpg" en [data-testid="upload-zone-pdf-input"]' },
+          { keyword: 'Then', text: 'debe visualizarse el contenedor de error debajo del campo en [data-testid="upload-zone-pdf-error"]' },
+          { keyword: 'And', text: 'el texto contiene "El formato \".jpg\" no está permitido en esta zona"' },
+          { keyword: 'And', text: 'el archivo no debe agregarse a la tabla de procesados' },
+        ],
+        involvedLocators: [
+          'upload-zone-pdf-input',
+          'upload-zone-pdf-error',
+          'uploaded-files-table',
+        ],
+      },
+      {
+        id: 'upload-03',
+        title: 'Error bajo el campo en Zona 02 (Imágenes) al incluir espacios en el nombre del archivo',
+        tags: ['@negativo', '@espacios-nombre', '@zona-imagen'],
+        type: 'Scenario',
+        description: 'Asegurar que la restricción de espacios en blanco en imágenes dispare el error bajo el campo.',
+        steps: [
+          { keyword: 'Given', text: 'que el usuario se ubica en la Zona 02 de Evidencias Visuales' },
+          { keyword: 'When', text: 'carga una imagen con nombre con espacios "foto evidencia prueba.png"' },
+          { keyword: 'Then', text: 'se despliega el mensaje de error en [data-testid="upload-zone-image-error"]' },
+          { keyword: 'And', text: 'el mensaje indica "El nombre del archivo no debe contener espacios en blanco"' },
+        ],
+        involvedLocators: [
+          'upload-zone-image-input',
+          'upload-zone-image-error',
+        ],
+      },
+      {
+        id: 'upload-04',
+        title: 'Error bajo el campo en Zona 03 (Excel/CSV) al superar el límite de peso máximo',
+        tags: ['@negativo', '@peso-maximo', '@zona-datos'],
+        type: 'Scenario',
+        description: 'Comprobar el rechazo inmediato de planillas que superen los 8 MB permitidos.',
+        steps: [
+          { keyword: 'Given', text: 'que el usuario está en la Zona 03 de Planillas y Datasets' },
+          { keyword: 'When', text: 'intenta cargar un archivo "dataset_masivo.xlsx" de 12 MB' },
+          { keyword: 'Then', text: 'se muestra el error debajo del campo en [data-testid="upload-zone-data-error"]' },
+          { keyword: 'And', text: 'el mensaje indica que supera el límite máximo de 8.00 MB' },
+        ],
+        involvedLocators: [
+          'upload-zone-data-input',
+          'upload-zone-data-error',
+        ],
+      },
+      {
+        id: 'upload-05',
+        title: 'Carga de lote múltiple exitosa en Zona 04 y registro consolidado',
+        tags: ['@smoke', '@lote-multiple', '@zona-batch'],
+        type: 'Scenario',
+        description: 'Procesar un conjunto de 3 archivos en la Zona 04 y comprobar su aparición en la tabla.',
+        steps: [
+          { keyword: 'Given', text: 'que el usuario está en la Zona 04 de Carga Múltiple' },
+          { keyword: 'When', text: 'selecciona 3 archivos válidos simultáneos en [data-testid="upload-zone-batch-input"]' },
+          { keyword: 'Then', text: 'no debe existir error en [data-testid="upload-zone-batch-error"]' },
+          { keyword: 'And', text: 'los 3 archivos se agregan a [data-testid="uploaded-files-table"] con badge "Zona 04"' },
+          { keyword: 'And', text: 'el contador [data-testid="processed-files-count"] se incrementa en 3' },
+        ],
+        involvedLocators: [
+          'upload-zone-batch-input',
+          'upload-zone-batch-error',
+          'uploaded-files-table',
+          'processed-files-count',
+        ],
+      },
+    ],
+  },
 };
 
 /**

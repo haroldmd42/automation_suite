@@ -88,7 +88,7 @@ export default function RealLoginPage() {
       const authData = await signIn({ email, password });
       await logAudit('login', 'auth.users', { email });
       toast.success('¡Bienvenido!', 'Has iniciado sesión correctamente.');
-      const userRole = profile?.role || authData?.user?.user_metadata?.role || 'admin';
+      const userRole = authData?.profile?.role || profile?.role || authData?.user?.user_metadata?.role || 'qa_lead';
       navigate(getRoleHomeRoute(userRole));
     } catch (err) {
       setErrorMessage(translateAuthError(err));

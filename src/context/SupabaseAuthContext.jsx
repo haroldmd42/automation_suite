@@ -10,7 +10,7 @@ export function SupabaseAuthProvider({ children }) {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState(null);
 
-  const fetchProfile = useCallback(async (userId, userEmail) => {
+  const fetchProfile = useCallback(async (userId, userEmail, userMetadata = {}) => {
     if (!supabase || !userId) {
       setProfile(null);
       return null;
@@ -24,21 +24,31 @@ export function SupabaseAuthProvider({ children }) {
 
       if (profileErr) {
         console.warn('Error al obtener perfil:', profileErr.message);
-        return null;
       }
 
       if (data) {
-        setProfile(data);
-        return data;
+        const perms = Array.isArray(data.permissions) ? data.permissions : [];
+        const isAnalyst =
+          data.role === 'qa_analyst' ||
+          perms.includes('role:qa_analyst') ||
+          userMetadata?.custom_role === 'qa_analyst' ||
+          userMetadata?.role === 'qa_analyst';
+        const normalizedProfile = {
+          ...data,
+          role: isAnalyst ? 'qa_analyst' : data.role,
+          permissions: perms.filter((p) => !String(p).startsWith('role:')),
+        };
+        setProfile(normalizedProfile);
+        return normalizedProfile;
       }
 
-      // Si no existe perfil todavía, se puede generar uno por defecto
+      // Si no existe perfil todavía, usar metadatos del usuario o valor por defecto
       const fallback = {
         id: userId,
         email: userEmail || '',
-        full_name: userEmail?.split('@')[0] || 'Usuario',
-        role: 'qa_lead',
-        department: 'qa',
+        full_name: userMetadata?.full_name || userEmail?.split('@')[0] || 'Usuario',
+        role: userMetadata?.custom_role || userMetadata?.role || 'qa_lead',
+        department: userMetadata?.department || 'qa',
       };
       setProfile(fallback);
       return fallback;
@@ -66,7 +76,7 @@ export function SupabaseAuthProvider({ children }) {
       setUser(currentSession?.user || null);
 
       if (currentSession?.user) {
-        fetchProfile(currentSession.user.id, currentSession.user.email).finally(() => {
+        fetchProfile(currentSession.user.id, currentSession.user.email, currentSession.user.user_metadata).finally(() => {
           if (isMounted) setLoading(false);
         });
       } else {
@@ -83,7 +93,7 @@ export function SupabaseAuthProvider({ children }) {
       setUser(newSession?.user || null);
 
       if (newSession?.user) {
-        await fetchProfile(newSession.user.id, newSession.user.email);
+        await fetchProfile(newSession.user.id, newSession.user.email, newSession.user.user_metadata);
       } else {
         setProfile(null);
       }
@@ -112,8 +122,12 @@ export function SupabaseAuthProvider({ children }) {
       err.originalMessage = signInError.message;
       throw err;
     }
-    return data;
-  }, []);
+    let fetchedProfile = null;
+    if (data?.user) {
+      fetchedProfile = await fetchProfile(data.user.id, data.user.email, data.user.user_metadata);
+    }
+    return { ...data, profile: fetchedProfile };
+  }, [fetchProfile]);
 
   const signUp = useCallback(async ({ email, password, fullName, role = 'qa_lead', department = 'qa' }) => {
     if (!isSupabaseConfigured || !supabase) {

@@ -52,7 +52,12 @@ export default function CustomSelect({
     return { value: String(opt), label: String(opt), disabled: false };
   });
 
-  const selectedOption = normalizedOptions.find((o) => o.value === String(value));
+  const cleanValue =
+    typeof value === 'object' && value !== null && 'target' in value
+      ? value.target?.value
+      : value;
+
+  const selectedOption = normalizedOptions.find((o) => o.value === String(cleanValue ?? ''));
 
   // Posicionamiento dinámico (con portal para evitar clipping en overflow de modales/tablas)
   const updatePosition = useCallback(() => {
@@ -128,7 +133,7 @@ export default function CustomSelect({
       e.preventDefault();
       if (!open) {
         setOpen(true);
-        const currIdx = normalizedOptions.findIndex((o) => o.value === String(value));
+        const currIdx = normalizedOptions.findIndex((o) => o.value === String(cleanValue ?? ''));
         setHighlightedIndex(currIdx >= 0 ? currIdx : 0);
         return;
       }
@@ -192,7 +197,7 @@ export default function CustomSelect({
         onClick={() => {
           if (!disabled) {
             setOpen((o) => !o);
-            const currIdx = normalizedOptions.findIndex((o) => o.value === String(value));
+            const currIdx = normalizedOptions.findIndex((o) => o.value === String(cleanValue ?? ''));
             setHighlightedIndex(currIdx >= 0 ? currIdx : 0);
           }
         }}

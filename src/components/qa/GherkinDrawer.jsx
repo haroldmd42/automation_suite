@@ -36,6 +36,7 @@ export default function GherkinDrawer() {
     if (path.startsWith('/controls')) return 'controls';
     if (path.startsWith('/async')) return 'async';
     if (path.startsWith('/tables')) return 'tables';
+    if (path.startsWith('/upload')) return 'upload';
     return 'dashboard';
   }, [location.pathname]);
 
