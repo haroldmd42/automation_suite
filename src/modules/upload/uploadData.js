@@ -97,7 +97,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'empty_file',
-      errorMessage: 'El archivo está vacío (0 Bytes). Debe contener datos válidos.',
+      errorMessage: 'El archivo está vacío. Debe contener datos válidos.',
       failedRule: 'Contenido no vacío',
     };
   }
@@ -107,7 +107,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'min_size_exceeded',
-      errorMessage: `El peso del archivo (${formatFileSize(fileSize)}) es inferior al mínimo requerido de ${formatFileSize(zone.minSizeBytes)}.`,
+      errorMessage: 'El peso del archivo es inferior al mínimo permitido.',
       failedRule: 'Peso mínimo',
     };
   }
@@ -117,7 +117,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'max_size_exceeded',
-      errorMessage: `El peso del archivo (${formatFileSize(fileSize)}) supera el límite máximo permitido de ${formatFileSize(zone.maxSizeBytes)}.`,
+      errorMessage: 'El peso del archivo supera el límite máximo permitido.',
       failedRule: 'Peso máximo',
     };
   }
@@ -127,7 +127,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'invalid_format',
-      errorMessage: `El formato "${ext || 'desconocido'}" no está permitido en esta zona. Formatos aceptados: ${zone.allowedExtensions.map((e) => e.toUpperCase()).join(', ')}.`,
+      errorMessage: 'El formato del archivo no está permitido en esta zona.',
       failedRule: 'Formato y extensión',
     };
   }
@@ -137,7 +137,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'spaces_not_allowed',
-      errorMessage: 'El nombre del archivo no debe contener espacios en blanco. Utiliza guiones o guiones bajos.',
+      errorMessage: 'El nombre del archivo no debe contener espacios en blanco.',
       failedRule: 'Espacios en nombre',
     };
   }
@@ -147,7 +147,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'filename_length_exceeded',
-      errorMessage: `El nombre del archivo tiene ${fileName.length} caracteres y excede el límite máximo de ${zone.maxFilenameLength} caracteres.`,
+      errorMessage: 'El nombre del archivo excede la longitud máxima permitida.',
       failedRule: 'Longitud del nombre',
     };
   }
@@ -157,7 +157,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'forbidden_characters',
-      errorMessage: 'El nombre contiene caracteres especiales prohibidos o secuencias de path traversal (..).',
+      errorMessage: 'El nombre contiene caracteres especiales prohibidos o secuencias no permitidas.',
       failedRule: 'Nomenclatura segura',
     };
   }
@@ -170,7 +170,7 @@ export function validateFileForZone(file, zone, existingFiles = []) {
     return {
       isValid: false,
       errorKey: 'duplicate_file',
-      errorMessage: `Ya existe un archivo procesado con el mismo nombre y tamaño ("${fileName}").`,
+      errorMessage: 'Ya existe un archivo cargado con el mismo nombre.',
       failedRule: 'Archivo duplicado',
     };
   }

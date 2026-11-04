@@ -559,7 +559,7 @@ export const GHERKIN_FEATURES = {
           { keyword: 'Given', text: 'que el usuario está en la Zona 01 de Documentos PDF' },
           { keyword: 'When', text: 'intenta cargar una imagen "captura.jpg" en [data-testid="upload-zone-pdf-input"]' },
           { keyword: 'Then', text: 'debe visualizarse el contenedor de error debajo del campo en [data-testid="upload-zone-pdf-error"]' },
-          { keyword: 'And', text: 'el texto contiene "El formato \".jpg\" no está permitido en esta zona"' },
+          { keyword: 'And', text: 'el texto contiene "El formato del archivo no está permitido en esta zona"' },
           { keyword: 'And', text: 'el archivo no debe agregarse a la tabla de procesados' },
         ],
         involvedLocators: [
@@ -595,7 +595,7 @@ export const GHERKIN_FEATURES = {
           { keyword: 'Given', text: 'que el usuario está en la Zona 03 de Planillas y Datasets' },
           { keyword: 'When', text: 'intenta cargar un archivo "dataset_masivo.xlsx" de 12 MB' },
           { keyword: 'Then', text: 'se muestra el error debajo del campo en [data-testid="upload-zone-data-error"]' },
-          { keyword: 'And', text: 'el mensaje indica que supera el límite máximo de 8.00 MB' },
+          { keyword: 'And', text: 'el mensaje indica "El peso del archivo supera el límite máximo permitido"' },
         ],
         involvedLocators: [
           'upload-zone-data-input',

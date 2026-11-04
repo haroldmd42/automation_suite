@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ArrowUp,
   ArrowDown,
+  GripVertical,
   FileSpreadsheet,
   FolderPlus,
   Edit3,
@@ -281,6 +282,10 @@ export default function QaTestCasesSheetModule() {
   const [editingSheetId, setEditingSheetId] = useState(null);
   const [editingSheetName, setEditingSheetName] = useState('');
 
+  // Reordenamiento y arrastre de filas (casos de prueba)
+  const [draggedRowId, setDraggedRowId] = useState(null);
+  const [dragOverRowId, setDragOverRowId] = useState(null);
+
   // Referencias para enfocar automáticamente el nuevo paso al presionar Enter
   const stepInputRefs = useRef({});
 
@@ -432,8 +437,13 @@ export default function QaTestCasesSheetModule() {
     toast.success('Caso creado exitosamente.');
   };
 
-  const handleDuplicateRow = (rowIndex) => {
+  const handleDuplicateRow = (rowIdOrIndex) => {
     if (!activeSheet || isLocked) return;
+    const rowIndex =
+      typeof rowIdOrIndex === 'number'
+        ? rowIdOrIndex
+        : activeSheet.rows.findIndex((r) => r.id === rowIdOrIndex);
+
     const sourceRow = activeSheet.rows[rowIndex];
     if (!sourceRow) return;
 
@@ -460,6 +470,89 @@ export default function QaTestCasesSheetModule() {
     });
 
     toast.success('Caso duplicado exitosamente.');
+  };
+
+  /**
+   * Reordena una fila a una nueva posición y actualiza la numeración secuencial (CP-001, CP-002, ...)
+   */
+  const handleReorderRow = (sourceRowId, targetRowId) => {
+    if (!activeSheet || isLocked) return;
+    if (sourceRowId === targetRowId) return;
+
+    updateActiveSheet((sheet) => {
+      const fromIndex = sheet.rows.findIndex((r) => r.id === sourceRowId);
+      const toIndex = sheet.rows.findIndex((r) => r.id === targetRowId);
+
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return sheet;
+
+      const nextRows = [...sheet.rows];
+      const [movedRow] = nextRows.splice(fromIndex, 1);
+      nextRows.splice(toIndex, 0, movedRow);
+
+      // Renumeración automática secuencial garantizada al mover
+      const renumberedRows = nextRows.map((r, idx) => ({
+        ...r,
+        code: `CP-${String(idx + 1).padStart(3, '0')}`,
+      }));
+
+      return {
+        ...sheet,
+        rows: renumberedRows,
+      };
+    });
+
+    toast.success('Posición y numeración actualizadas exitosamente.');
+  };
+
+  /**
+   * Mueve una fila hacia arriba (-1) o hacia abajo (+1)
+   */
+  const handleMoveRow = (rowId, direction) => {
+    if (!activeSheet || isLocked) return;
+    const currentIndex = activeSheet.rows.findIndex((r) => r.id === rowId);
+    if (currentIndex === -1) return;
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= activeSheet.rows.length) return;
+
+    const targetRowId = activeSheet.rows[targetIndex].id;
+    handleReorderRow(rowId, targetRowId);
+  };
+
+  // Controladores de Arrastrar y Soltar (Drag and Drop)
+  const handleRowDragStart = (e, rowId) => {
+    if (isLocked) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', rowId);
+    setDraggedRowId(rowId);
+  };
+
+  const handleRowDragOver = (e, rowId) => {
+    if (isLocked || !draggedRowId || draggedRowId === rowId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverRowId !== rowId) {
+      setDragOverRowId(rowId);
+    }
+  };
+
+  const handleRowDragLeave = () => {
+    // Sin acción necesaria en salida simple
+  };
+
+  const handleRowDrop = (e, targetRowId) => {
+    if (isLocked) return;
+    e.preventDefault();
+    const sourceRowId = e.dataTransfer.getData('text/plain') || draggedRowId;
+    setDraggedRowId(null);
+    setDragOverRowId(null);
+    if (sourceRowId && targetRowId && sourceRowId !== targetRowId) {
+      handleReorderRow(sourceRowId, targetRowId);
+    }
+  };
+
+  const handleRowDragEnd = () => {
+    setDraggedRowId(null);
+    setDragOverRowId(null);
   };
 
   const handleDeleteRow = (rowId) => {
@@ -914,7 +1007,7 @@ export default function QaTestCasesSheetModule() {
 
               {actionsMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-64 rounded-2xl border border-moss-200 bg-white p-1.5 shadow-lift z-40 animate-slide-up"
+                  className="absolute right-0 mt-2 w-64 rounded-2xl border border-moss-200 bg-white p-1.5 shadow-lift z-50 animate-slide-up"
                   data-testid="sheet-options-dropdown-menu"
                 >
                   {!isLocked && (
@@ -1470,7 +1563,7 @@ export default function QaTestCasesSheetModule() {
 
                   {/* Columna Acciones (solo activa en modo edición) */}
                   {!isLocked && (
-                    <th className="w-28 min-w-[105px] py-2.5 px-3 text-center font-mono text-[11px] font-bold uppercase tracking-wider bg-moss-950 text-moss-200">
+                    <th className="w-36 min-w-[140px] py-2.5 px-3 text-center font-mono text-[11px] font-bold uppercase tracking-wider bg-moss-950 text-moss-200">
                       Acciones
                     </th>
                   )}
@@ -1490,19 +1583,42 @@ export default function QaTestCasesSheetModule() {
                 ) : (
                   filteredRows.map((row, rowIndex) => {
                     const rowSteps = getRowSteps(row);
+                    const isEven = rowIndex % 2 === 0;
 
                     return (
                       <tr
                         key={row.id}
+                        onDragOver={(e) => handleRowDragOver(e, row.id)}
+                        onDragLeave={handleRowDragLeave}
+                        onDrop={(e) => handleRowDrop(e, row.id)}
                         className={cn(
                           'divide-x divide-moss-200 transition group align-top',
-                          isLocked ? 'bg-slate-50/35' : 'hover:bg-moss-50/40'
+                          isEven ? 'bg-white' : 'bg-[#f4f7f4]',
+                          !isLocked && 'hover:bg-emerald-50/50',
+                          dragOverRowId === row.id && 'bg-emerald-100/80 ring-2 ring-emerald-500 shadow-sm'
                         )}
                         data-testid={`test-case-row-${rowIndex + 1}`}
                       >
-                        {/* Celda # Caso (Índice tipo Excel) */}
-                        <td className="bg-moss-50/80 py-3 px-2.5 text-center align-top select-none">
+                        {/* Celda # Caso (Índice tipo Excel) con soporte de arrastre */}
+                        <td
+                          className={cn(
+                            'py-2.5 px-2 text-center align-top select-none transition border-r border-moss-200',
+                            isEven ? 'bg-[#f0f4f0]' : 'bg-[#e7eee7]'
+                          )}
+                        >
                           <div className="flex flex-col items-center gap-1">
+                            {!isLocked && (
+                              <div
+                                draggable
+                                onDragStart={(e) => handleRowDragStart(e, row.id)}
+                                onDragEnd={handleRowDragEnd}
+                                className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-moss-200/80 text-moss-500 hover:text-moss-900 transition flex items-center justify-center"
+                                title="Arrastrar y soltar para mover este caso a cualquier posición"
+                                data-testid={`drag-row-handle-${rowIndex + 1}`}
+                              >
+                                <GripVertical className="h-4 w-4" />
+                              </div>
+                            )}
                             <span className="font-mono text-[11px] font-bold text-moss-500">
                               {rowIndex + 1}
                             </span>
@@ -1525,7 +1641,7 @@ export default function QaTestCasesSheetModule() {
                               <td
                                 key={col.id}
                                 className={cn(
-                                  'p-2.5 align-top bg-white transition',
+                                  'p-2.5 align-top bg-transparent transition',
                                   cellIncomplete && 'bg-red-50/50 ring-1 ring-inset ring-red-300'
                                 )}
                                 data-testid={`cell-${row.id}-${col.key}`}
@@ -1737,11 +1853,36 @@ export default function QaTestCasesSheetModule() {
 
                         {/* Celda de Acciones de la Fila (Solo visible si no está bloqueada) */}
                         {!isLocked && (
-                          <td className="p-2.5 text-center align-top bg-moss-50/30">
+                          <td
+                            className={cn(
+                              'p-2 text-center align-top transition',
+                              isEven ? 'bg-[#f8faf8]' : 'bg-[#eff4ef]'
+                            )}
+                          >
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => handleDuplicateRow(rowIndex)}
+                                onClick={() => handleMoveRow(row.id, -1)}
+                                disabled={rowIndex === 0}
+                                className="rounded-lg border border-moss-200 bg-white p-1.5 text-moss-700 hover:bg-moss-100 hover:text-moss-950 disabled:opacity-25 disabled:cursor-not-allowed transition"
+                                title="Mover caso hacia arriba"
+                                data-testid={`move-row-up-btn-${rowIndex + 1}`}
+                              >
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveRow(row.id, 1)}
+                                disabled={rowIndex === filteredRows.length - 1}
+                                className="rounded-lg border border-moss-200 bg-white p-1.5 text-moss-700 hover:bg-moss-100 hover:text-moss-950 disabled:opacity-25 disabled:cursor-not-allowed transition"
+                                title="Mover caso hacia abajo"
+                                data-testid={`move-row-down-btn-${rowIndex + 1}`}
+                              >
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDuplicateRow(row.id)}
                                 className="rounded-lg border border-moss-200 bg-white p-1.5 text-moss-700 hover:bg-moss-100 hover:text-moss-950 transition"
                                 title="Duplicar caso de prueba"
                                 data-testid={`duplicate-row-btn-${rowIndex + 1}`}

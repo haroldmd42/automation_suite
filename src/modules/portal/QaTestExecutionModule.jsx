@@ -117,6 +117,12 @@ export default function QaTestExecutionModule() {
    * y asigna automáticamente el nombre de quien realizó la ejecución
    */
   const handleSetCaseExecutionStatus = (sheetId, rowId, newStatus) => {
+    const targetSheet = sheets.find((s) => s.id === sheetId);
+    const targetRow = targetSheet?.rows?.find((r) => r.id === rowId);
+    if (targetRow && targetRow.executionStatus === newStatus) {
+      return;
+    }
+
     const nowIso = new Date().toISOString();
 
     const updated = sheets.map((s) => {
@@ -695,6 +701,7 @@ export default function QaTestExecutionModule() {
                     const status = row.executionStatus || 'pending';
                     const rowSteps = getRowSteps(row).filter((s) => String(s).trim().length > 0);
                     const isRowSelected = selectedRowIds.has(row.id);
+                    const isEven = rowIndex % 2 === 0;
 
                     return (
                       <tr
@@ -702,14 +709,25 @@ export default function QaTestExecutionModule() {
                         className={cn(
                           'divide-x divide-moss-200 transition align-top',
                           isRowSelected && 'ring-1 ring-inset ring-moss-500 bg-moss-50/70',
-                          !isRowSelected && status === 'passed' && 'bg-emerald-50/35 hover:bg-emerald-50/60',
-                          !isRowSelected && status === 'failed' && 'bg-red-50/35 hover:bg-red-50/60',
-                          !isRowSelected && status === 'pending' && 'hover:bg-moss-50/50'
+                          !isRowSelected &&
+                            status === 'passed' &&
+                            (isEven ? 'bg-emerald-50/30 hover:bg-emerald-50/60' : 'bg-emerald-100/30 hover:bg-emerald-100/50'),
+                          !isRowSelected &&
+                            status === 'failed' &&
+                            (isEven ? 'bg-red-50/30 hover:bg-red-50/60' : 'bg-red-100/30 hover:bg-red-100/50'),
+                          !isRowSelected &&
+                            status === 'pending' &&
+                            (isEven ? 'bg-white hover:bg-moss-50/50' : 'bg-[#f4f7f4] hover:bg-moss-100/50')
                         )}
                         data-testid={`exec-case-row-${rowIndex + 1}`}
                       >
                         {/* Checkbox de selección del escenario */}
-                        <td className="bg-moss-50/70 py-3.5 px-3 text-center align-top">
+                        <td
+                          className={cn(
+                            'py-3.5 px-3 text-center align-top transition',
+                            isEven ? 'bg-moss-50/60' : 'bg-moss-100/50'
+                          )}
+                        >
                           <div className="flex items-center justify-center pt-1">
                             <Checkbox
                               id={`select-exec-row-${rowIndex + 1}`}
@@ -721,7 +739,12 @@ export default function QaTestExecutionModule() {
                         </td>
 
                         {/* # Caso */}
-                        <td className="bg-moss-50/70 py-3.5 px-2.5 text-center align-top">
+                        <td
+                          className={cn(
+                            'py-3.5 px-2.5 text-center align-top transition',
+                            isEven ? 'bg-moss-50/60' : 'bg-moss-100/50'
+                          )}
+                        >
                           <div className="flex flex-col items-center gap-1">
                             <span className="font-mono text-[11px] font-bold text-moss-500">
                               {rowIndex + 1}

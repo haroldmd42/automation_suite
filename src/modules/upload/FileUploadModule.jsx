@@ -93,71 +93,68 @@ export default function FileUploadModule() {
           // Validación para zona de lote múltiple (número de archivos y peso total)
           if (zone.multiple) {
             if (files.length > zone.maxFilesPerBatch) {
-              const err = `El lote contiene ${files.length} archivos y supera el máximo permitido de ${zone.maxFilesPerBatch} archivos.`;
+              const err = 'La cantidad de archivos supera el límite permitido para este lote.';
               setZoneErrors((prev) => ({ ...prev, [zone.id]: err }));
-              addEvent(`[${zone.badge}] Error de lote: ${err}`, 'error');
-              toast.error(err);
+              addEvent(`[${zone.badge}] Error: ${err}`, 'error');
               return;
             }
 
-              const totalBatchSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
-              if (totalBatchSize > zone.maxBatchSizeBytes) {
-                const err = `El peso acumulado del lote (${formatFileSize(totalBatchSize)}) supera el límite máximo de ${formatFileSize(zone.maxBatchSizeBytes)}.`;
-                setZoneErrors((prev) => ({ ...prev, [zone.id]: err }));
-                addEvent(`[${zone.badge}] Error de lote: ${err}`, 'error');
-                toast.error(err);
-                return;
-              }
+            const totalBatchSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
+            if (totalBatchSize > zone.maxBatchSizeBytes) {
+              const err = 'El peso acumulado del lote supera el límite máximo permitido.';
+              setZoneErrors((prev) => ({ ...prev, [zone.id]: err }));
+              addEvent(`[${zone.badge}] Error: ${err}`, 'error');
+              return;
             }
+          }
 
-            // Validar cada archivo con las reglas individuales de la zona
-            for (const file of files) {
-              const validation = validateFileForZone(file, zone, processedFiles);
-              if (!validation.isValid) {
-                // Mostrar el error exactamente debajo del campo de esta zona
-                setZoneErrors((prev) => ({ ...prev, [zone.id]: validation.errorMessage }));
-                addEvent(
-                  `[${zone.badge}] Rechazado "${file.name}": ${validation.errorMessage}`,
-                  'error'
-                );
-                toast.error(validation.errorMessage);
-                return;
-              }
+          // Validar cada archivo con las reglas individuales de la zona
+          for (const file of files) {
+            const validation = validateFileForZone(file, zone, processedFiles);
+            if (!validation.isValid) {
+              // Mostrar el error exactamente debajo del campo de esta zona (sin snackbar emergente)
+              setZoneErrors((prev) => ({ ...prev, [zone.id]: validation.errorMessage }));
+              addEvent(
+                `[${zone.badge}] Rechazado "${file.name}": ${validation.errorMessage}`,
+                'error'
+              );
+              return;
             }
+          }
 
-            // Si todos los archivos de esta subida son válidos, limpiar el error de la zona
-            setZoneErrors((prev) => ({ ...prev, [zone.id]: null }));
-            setProcessingZones((prev) => ({ ...prev, [zone.id]: true }));
+          // Si todos los archivos de esta subida son válidos, limpiar el error de la zona
+          setZoneErrors((prev) => ({ ...prev, [zone.id]: null }));
+          setProcessingZones((prev) => ({ ...prev, [zone.id]: true }));
 
-            // Simular procesamiento asíncrono realista (500 ms)
-            await new Promise((res) => setTimeout(res, 500));
+          // Simular procesamiento asíncrono realista (500 ms)
+          await new Promise((res) => setTimeout(res, 500));
 
-            const newProcessed = files.map((file) => {
-              const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
-                return {
-                  id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-                  name: file.name,
-                  size: file.size,
-                  extension: ext,
-                  mimeType: file.type || 'application/octet-stream',
-                  zoneId: zone.id,
-                  zoneBadge: zone.badge,
-                  zoneTitle: zone.title,
-                  processedAt: new Date().toISOString(),
-                  timeLabel: formatTime(),
-                };
-        });
+          const newProcessed = files.map((file) => {
+            const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+            return {
+              id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              name: file.name,
+              size: file.size,
+              extension: ext,
+              mimeType: file.type || 'application/octet-stream',
+              zoneId: zone.id,
+              zoneBadge: zone.badge,
+              zoneTitle: zone.title,
+              processedAt: new Date().toISOString(),
+              timeLabel: formatTime(),
+            };
+          });
 
-      setProcessedFiles((prev) => [...newProcessed, ...prev]);
-      setProcessingZones((prev) => ({ ...prev, [zone.id]: false }));
+          setProcessedFiles((prev) => [...newProcessed, ...prev]);
+          setProcessingZones((prev) => ({ ...prev, [zone.id]: false }));
 
-      const names = files.map((f) => `"${f.name}"`).join(', ');
-      addEvent(`[${zone.badge}] Archivo(s) procesado(s) exitosamente: ${names}.`, 'success');
-      toast.success(
-        files.length === 1
-          ? 'Archivo cargado y procesado correctamente.'
-          : `${files.length} archivos cargados y procesados correctamente.`
-      );
+          const names = files.map((f) => `"${f.name}"`).join(', ');
+          addEvent(`[${zone.badge}] Archivo(s) procesado(s) exitosamente: ${names}.`, 'success');
+          toast.success(
+            files.length === 1
+              ? 'Archivo cargado exitosamente.'
+              : 'Archivos cargados exitosamente.'
+          );
     },
     [processedFiles, addEvent, toast]
   );
@@ -203,14 +200,14 @@ export default function FileUploadModule() {
                       }
                       return prev.filter((f) => f.id !== id);
                     });
-                    toast.info('Archivo removido.');
+                    toast.info('Archivo eliminado exitosamente.');
                   };
 
                     // Limpiar todos los archivos procesados
                     const handleClearAllProcessed = () => {
                       setProcessedFiles([]);
                       addEvent('Lista de archivos procesados vaciada.', 'info');
-                      toast.info('Lista de archivos procesados limpiada.');
+                      toast.info('Lista limpiada exitosamente.');
                     };
 
                     // Restablecer módulo completo
@@ -228,7 +225,7 @@ export default function FileUploadModule() {
                           message: 'Módulo y zonas de carga restablecidas.',
                         },
                       ]);
-                      toast.info('Módulo restablecido.');
+                      toast.info('Zonas restablecidas exitosamente.');
                     };
 
                       // Icono para la extensión

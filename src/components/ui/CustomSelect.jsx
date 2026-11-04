@@ -165,6 +165,10 @@ export default function CustomSelect({
 
   const handleSelect = (val) => {
     setOpen(false);
+    // Sincronizar valor del select nativo oculto sin disparar evento duplicado
+    if (hiddenSelectRef.current) {
+      hiddenSelectRef.current.value = val;
+    }
     if (onChange) {
       // Disparar evento sintético compatible con handlers normales de select
       const syntheticEvent = {
@@ -172,11 +176,6 @@ export default function CustomSelect({
         currentTarget: { id: selectId, value: val },
       };
       onChange(syntheticEvent);
-    }
-    // Sincronizar select oculto
-    if (hiddenSelectRef.current) {
-      hiddenSelectRef.current.value = val;
-      hiddenSelectRef.current.dispatchEvent(new Event('change', { bubbles: true }));
     }
     triggerRef.current?.focus();
   };
